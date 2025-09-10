@@ -117,19 +117,23 @@ export default {
         const email = ref('');
         const password = ref('');
         const confirmPassword = ref('');
+        const mobileno = ref('');
+        const lastname = ref('');
 
         const handleSubmit = async () => {
             if (!email.value || !password.value) {
-                const toast = await toastController.create({
+            const toast = await toastController.create({
                 message: 'Please fill in all fields',
                 duration: 2000,
                 color: 'danger'
-                });
-                await toast.present();
-                return;
+            });
+            await toast.present();
+            return;
             }
 
-            if (!isLogin.value && password.value !== confirmPassword.value) {
+            if (!isLogin.value) {
+            // SIGN UP
+            if (password.value !== confirmPassword.value) {
                 const toast = await toastController.create({
                 message: 'Passwords do not match',
                 duration: 2000,
@@ -139,43 +143,94 @@ export default {
                 return;
             }
 
+            const registerData = {
+                email: email.value,
+                mobileno: mobileno.value,
+                password: password.value,
+                lname: lastname.value,
+                streetname: '', // optional
+                stateid: ''     // optional
+            };
+
+            try {
+                const response = await fetch(
+                'https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/UserRegister',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(registerData)
+                }
+                );
+
+                const result = await response.json();
+                console.log('register response:', result);
+
+                if (result.res) {
+                const toast = await toastController.create({
+                    message: 'Signup successful! Please check your email to verify.',
+                    duration: 3000,
+                    color: 'success'
+                });
+                await toast.present();
+
+                // auto-login shortcut (optional)
+                localStorage.setItem('userId', result.details);
+                localStorage.setItem('email', email.value);
+                window.location.href = '/tabs/home';
+                } else if (result.details === 'email already exists') {
+                const toast = await toastController.create({
+                    message: 'Email already exists. Please login or reset password.',
+                    duration: 3000,
+                    color: 'warning'
+                });
+                await toast.present();
+                } else {
+                const toast = await toastController.create({
+                    message: 'Signup failed. Please contact support.',
+                    duration: 3000,
+                    color: 'danger'
+                });
+                await toast.present();
+                }
+            } catch (err) {
+                console.error('Register error:', err);
+                const toast = await toastController.create({
+                message: 'Network or server error',
+                duration: 3000,
+                color: 'danger'
+                });
+                await toast.present();
+            }
+
+            } else {
+            // LOGIN (already working)
             const loginData = {
                 email: email.value,
                 password: password.value
             };
-            
 
             try {
-                const response = await fetch('https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/UserLogin', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(loginData)
-                });
-
-                
-
+                const response = await fetch(
+                'https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/UserLogin',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(loginData)
+                }
+                );
                 const result = await response.json();
-                console.log('login response:', result)
+                console.log('login response:', result);
 
                 if (result.res) {
-                console.log('Login successful', result.details);
-
-                // Example placeholder: Store user info and navigate
                 localStorage.setItem('userId', result.details);
                 localStorage.setItem('email', email.value);
-
                 const toast = await toastController.create({
                     message: 'Login successful',
                     duration: 2000,
                     color: 'success'
                 });
                 await toast.present();
-
-                // Example: route to home page
-                window.location.href = '/tabs/home'; // Update as appropriate
-
+                window.location.href = '/tabs/home';
                 } else {
                 const toast = await toastController.create({
                     message: 'Login failed. Check your credentials.',
@@ -184,7 +239,6 @@ export default {
                 });
                 await toast.present();
                 }
-
             } catch (error) {
                 console.error('Login error:', error);
                 const toast = await toastController.create({
@@ -194,39 +248,63 @@ export default {
                 });
                 await toast.present();
             }
+            }
 
             password.value = '';
             confirmPassword.value = '';
         };
 
-
         const handleForgotPassword = async () => {
             const alert = await alertController.create({
-                header: 'Reset Password',
-                message: 'Enter your email to reset your password',
-                inputs: [
+            header: 'Reset Password',
+            message: 'Enter your email to reset your password',
+            inputs: [
                 {
-                    name: 'email',
-                    type: 'email',
-                    placeholder: 'Email',
-                    value: email.value
+                name: 'email',
+                type: 'email',
+                placeholder: 'Email',
+                value: email.value
                 }
-                ],
-                buttons: [
+            ],
+            buttons: [
+                { text: 'Cancel', role: 'cancel' },
                 {
-                    text: 'Cancel',
-                    role: 'cancel'
-                },
-                {
-                    text: 'Send',
-                    handler: (data) => {
-                    console.log('Password reset for:', data.email);
-                    // Handle password reset logic here
+                text: 'Send',
+                handler: async (data) => {
+                    try {
+                    const response = await fetch(
+                        'https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/UserForgotPassword',
+                        {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: data.email })
+                        }
+                    );
+                    const result = await response.json();
+                    console.log('forgot password response:', result);
+
+                    const toast = await toastController.create({
+                        message: result.res
+                        ? 'Password reset instructions sent to your email.'
+                        : 'Error: ' + (result.details || 'Failed to send reset email.'),
+                        duration: 3000,
+                        color: result.res ? 'success' : 'danger'
+                    });
+                    await toast.present();
+                    } catch (err) {
+                    console.error('Forgot password error:', err);
+                    const toast = await toastController.create({
+                        message: 'Network or server error',
+                        duration: 3000,
+                        color: 'danger'
+                    });
+                    await toast.present();
                     }
                 }
+                }
             ]
-        });
-        await alert.present();
+            });
+            await alert.present();
         };
 
         const toggleMode = () => {
@@ -239,11 +317,15 @@ export default {
             email,
             password,
             confirmPassword,
+            mobileno,
+            lastname,
             handleSubmit,
             handleForgotPassword,
             toggleMode
         };
     }
+
+
 };
 </script>
 

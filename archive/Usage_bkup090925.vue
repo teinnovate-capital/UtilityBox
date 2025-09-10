@@ -1,14 +1,15 @@
-
 <template>
   <ion-page class="usage-page" fullscreen>
     <ion-content class="ion-padding custom-bg" fullscreen>
       <HeaderComponent />
-
+<!-- 
+      <ion-toolbar class="toolbar" color="#4b1248"></ion-toolbar> -->
       <!-- Energy Usage Chart -->
       <div style="text-align: center">
-        <h2 class="section-title">Energy Usage</h2>
+        <h2 class="section-title" >Energy Usage</h2>
       </div>
-
+      
+      
       <div class="chart-container">
         <div v-if="isLoading" class="chart-loader-overlay">
           <div class="loader-bars">
@@ -26,46 +27,29 @@
 
       <h2 class="section-title">Transaction History</h2>
 
-      <div
-        class="history-line"
-        v-for="(tx, index) in transactionHistory"
-        :key="index"
-      >
-        <div class="tx-row">
-          <!-- Left: Date & Time -->
-          <div class="tx-date">
-            {{ formatDate(tx.entrydt) }}
-          </div>
+    <div
+      class="history-line"
+      v-for="(tx, index) in transactionHistory"
+      :key="index"
+    >
+      <div class="tx-row">
+        <!-- Left: Date & Time -->
+        <div class="tx-date">
+          {{ formatDate(tx.entrydt) }}
+        </div>
 
-          <!-- Divider -->
-          <div class="tx-divider"></div>
+        <!-- Divider -->
+        <div class="tx-divider"></div>
 
-          <!-- Right: Transaction Info -->
-          <div class="tx-details">
-            <div class="tx-pin selectable">
-              {{ formatToken(tx.responsepin) }}
-              <ion-icon
-                :icon="copyOutline"
-                class="copy-icon"
-                @click="copyToClipboard(tx.responsepin)"
-              />
-            </div>
-
-            <div class="tx-amount">₦{{ (tx.amount / 100).toLocaleString() }} :: {{ tx.units || 'N/A' }}</div>
-
-            <div class="tx-meter selectable">
-              Meter: {{ tx.accountno }}
-              <ion-icon
-                :icon="copyOutline"
-                class="copy-icon"
-                @click="copyToClipboard(tx.accountno)"
-              />
-            </div>
-
-            <div class="tx-edc">EDC: {{ tx.pid.toUpperCase() }}</div>
-          </div>
+        <!-- Right: Transaction Info -->
+        <div class="tx-details">
+          <div class="tx-pin">{{ formatToken(tx.responsepin) }}</div>
+          <div class="tx-amount">₦{{ (tx.amount / 100).toLocaleString() }} :: {{ tx.units || 'N/A' }}</div>
+          <div class="tx-meter">Meter: {{ tx.accountno }}</div>
+          <div class="tx-edc">EDC: {{ tx.pid.toUpperCase() }}</div>
         </div>
       </div>
+    </div>
     </ion-content>
   </ion-page>
 </template>
@@ -74,45 +58,51 @@
 import {
   IonPage,
   IonContent,
-  IonIcon,
-  toastController
+  IonToolbar
 } from '@ionic/vue';
-import { copyOutline } from 'ionicons/icons';
+
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import {
-  Chart,
-  BarController,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 import HeaderComponent from '../components/HeaderComponent.vue';
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
+// Canvas reference
 const usageChartCanvas = ref(null);
+
+// Loader and data
 const usageData = ref([]);
 const transactionHistory = ref([]);
 const isLoading = ref(true);
 
+// ⚡ Dummy email for now — replace with actual logged-in user email
+const email = localStorage.getItem('email');;
 const userid = localStorage.getItem('userId');
 
+// Fetch usage + transaction data
 const fetchTransactionHistory = async () => {
   isLoading.value = true;
-  const data = { userid, status: 1 };
+  const userid = localStorage.getItem('userId'); // this was set after login
+  const data = {
+    userid,
+    status: 1
+  };
+
+
 
   try {
     const res = await axios.post(
       'https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/GetUserTransaction',
       data,
-      { headers: { 'Content-Type': 'application/json' } }
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
 
     if (Array.isArray(res.data)) {
       transactionHistory.value = res.data;
+      console.log("✅ Loaded transactions:", res.data);
     } else {
       console.error('❌ Unexpected response format:', res.data);
     }
@@ -123,19 +113,28 @@ const fetchTransactionHistory = async () => {
   }
 };
 
+
 const fetchUsageChartData = async () => {
-  const payload = { userid, status: 1 };
+  const userid = localStorage.getItem('userId');
+  const payload = {
+    userid,
+    status: 1
+  };
 
   try {
     const res = await axios.post(
       'https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/GetUserEnergyUsage',
       payload,
-      { headers: { 'Content-Type': 'application/json' } }
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
 
     if (Array.isArray(res.data)) {
       usageData.value = res.data;
       renderChart();
+    } else {
+      console.error("❌ Unexpected usage data format:", res.data);
     }
   } catch (err) {
     console.error("❌ Error fetching usage chart data:", err);
@@ -144,32 +143,74 @@ const fetchUsageChartData = async () => {
 
 const formatToken = (token) => {
   if (!token) return '';
-  if (token.includes('-')) return token;
-  return token.replace(/(.{4})/g, '$1-').replace(/-$/, '');
+  
+  // Check if token is already formatted (contains dashes)
+  if (token.includes('-')) {
+    return token; // Return as-is if already formatted
+  }
+  
+  // Only format if it's not already formatted
+  return token.replace(/(.{4})/g, '$1-').replace(/-$/, ''); // Add dashes every 4 digits
 };
 
+
+// Chart rendering logic
 const renderChart = () => {
   if (!usageChartCanvas.value || usageData.value.length === 0) return;
 
   const ctx = usageChartCanvas.value.getContext('2d');
-  if (window.currentChart) window.currentChart.destroy();
 
-  const monthMap = {
-    January: "Jan", February: "Feb", March: "Mar", April: "Apr",
-    May: "May", June: "Jun", July: "Jul", August: "Aug",
-    September: "Sep", October: "Oct", November: "Nov", December: "Dec"
-  };
+  // Clear existing chart (if needed)
+  if (window.currentChart) {
+    window.currentChart.destroy();
+  }
+
+const monthMap = {
+  January: "Jan",
+  February: "Feb",
+  March: "Mar",
+  April: "Apr",
+  May: "May",
+  June: "Jun",
+  July: "Jul",
+  August: "Aug",
+  September: "Sep",
+  October: "Oct",
+  November: "Nov",
+  December: "Dec"
+};
+
 
   const labels = usageData.value.map(item => monthMap[item.monthname] + ' ' + item.year);
-  const values = usageData.value.map(item => item.totalamount / 100);
+  const values = usageData.value.map(item => item.totalamount / 100); // Convert from Kobo if needed
 
   window.currentChart = new Chart(ctx, {
     type: 'bar',
-    data: { labels, datasets: [{ label: 'Usage (N)', data: values, backgroundColor: '#7e61ff', borderRadius: 4, borderSkipped: false }] },
+    data: {
+      labels,
+      datasets: [{
+        label: 'Usage (N)',
+        data: values,
+        backgroundColor: '#7e61ff',
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
     options: {
       responsive: true,
-      plugins: { legend: { display: false }, tooltip: { enabled: true } },
-      scales: { y: { beginAtZero: true, title: { display: true, text: 'Amount (N)' } } }
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true }
+      },
+      scales: {
+        y: {
+          title: { display: true, text: 'Amount (N)' },
+          beginAtZero: true
+        },
+        x: {
+          title: { display: true,}
+        }
+      }
     }
   });
 };
@@ -177,76 +218,30 @@ const renderChart = () => {
 const formatDate = (entrydt) => {
   const dt = new Date(entrydt);
   return dt.toLocaleString('en-GB', {
-    day: '2-digit', month: 'short', year: '2-digit',
-    hour: '2-digit', minute: '2-digit'
+    day: '2-digit',
+    month: 'short',
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
   });
 };
 
-
-const copyToClipboard = async (text ) => {
-  let success = false;
-
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
-      success = true;
-    } else {
-      throw new Error("navigator.clipboard not available");
-    }
-  } catch (err) {
-    console.warn("Clipboard API failed, using fallback:", err);
-
-    // Fallback: create temporary textarea
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed"; // avoid scrolling to bottom
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    try {
-      success = document.execCommand("copy");
-    } catch (e) {
-      console.error("Fallback copy failed:", e);
-      success = false;
-    }
-    document.body.removeChild(textarea);
-  }
-
-  // ✅ Always show toast
-  const toast = await toastController.create({
-    message: success ? "Copied to clipboard!" : "Copy failed",
-    duration: 1500,
-    color: success ? "success" : "danger"
+const formatNaira = (amount) => {
+  return Number(amount).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
-  await toast.present();
 };
 
+const formatKwh = (units) => {
+  return Number(units).toFixed(1);
+};
 
 onMounted(() => {
   fetchTransactionHistory();
   fetchUsageChartData();
 });
 </script>
-
-<style scoped>
-/* Make text selectable */
-.selectable {
-  user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-}
-
-.copy-icon {
-  font-size: 14px;
-  margin-left: 6px;
-  vertical-align: middle;
-  color: #ffc857;
-  cursor: pointer;
-}
-
-</style>
 
 
 <style scoped>

@@ -22,24 +22,22 @@
         <p>Loading rewards...</p>
       </div>
 
+      <div v-if="isLoading" class="loader-overlay">
+        <div class="loader-container">
+          <div class="loader-bars">
+            <div class="bar1"></div>
+            <div class="bar2"></div>
+            <div class="bar3"></div>
+            <div class="bar4"></div>
+            <div class="bar5"></div>
+            <div class="bar6"></div>
+          </div>
+          <p class="centered-element">Loading rewards...</p>
+        </div>
+      </div>
+
       <!-- Rewards List -->
       <div v-else class="rewards-container">
-        <!-- Static Cashback Card -->
-        <div class="reward-card">
-          <div class="reward-image-container">
-            <img src="/src/assets/cash-back-02.jpeg" alt="Cash Back" class="reward-image" />
-            <div class="reward-badge free-badge">CASH BACK</div>
-          </div>
-          <div class="reward-content">
-            <h3 class="reward-title">Cash Back on All Purchases</h3>
-            <p class="reward-status">Always available</p>
-          </div>
-          <div class="reward-decoration">
-            <div class="star-decoration">✨⭐💎✨⭐💎</div>
-          </div>
-        </div>
-
-        <!-- Dynamic Rewards from API -->
         <div v-for="reward in rewards" :key="reward.id" class="reward-card">
           <div class="reward-image-container">
             <img :src="reward.image" :alt="reward.caption" class="reward-image" />
@@ -47,7 +45,7 @@
               {{ reward.badge }}
             </div>
           </div>
-
+          
           <div class="reward-content">
             <div class="reward-meta">
               <span class="claim-date">Claim by {{ reward.claimDate }}</span>
@@ -56,21 +54,26 @@
             <p class="reward-status" :class="{ 'all-gone': reward.status === 'All gone' }">
               {{ reward.status }}
             </p>
-
-            <ion-button
-              v-if="reward.callToActionLink"
-              class="claim-button"
+            
+            <!-- Action Button (only show if callToActionLink exists) -->
+            <ion-button 
+              v-if="reward.callToActionLink" 
+              class="claim-button" 
               @click="openRewardLink(reward)"
             >
               {{ reward.buttonText || 'Reveal offer' }}
             </ion-button>
           </div>
 
+          <!-- Decorative Elements -->
           <div class="reward-decoration">
-            <div class="star-decoration">✨⭐💎✨⭐💎</div>
+            <div class="star-decoration">
+              ✨⭐💎✨⭐💎
+            </div>
           </div>
         </div>
       </div>
+
     </ion-content>
   </ion-page>
 </template>
@@ -80,55 +83,95 @@ import {
   IonPage,
   IonContent,
   IonButton,
+  IonIcon,
+  IonPopover,
+  IonList,
+  IonItem,
+  IonLabel,
   toastController
 } from '@ionic/vue';
+
+import { personCircle, personOutline, logOutOutline } from 'ionicons/icons';
 import { ref, onMounted } from 'vue';
 import HeaderComponent from '../components/HeaderComponent.vue';
 
+// Get user data from localStorage
 const userId = localStorage.getItem('userId') || '';
 const email = localStorage.getItem('email') || '';
 
+// Reactive variables
 const isLoading = ref(false);
+const isProfilePopoverOpen = ref(false);
 const rewards = ref([]);
 
+// Sample data for testing (will be replaced with API call)
+const sampleRewards = [
+  {
+    id: 1,
+    image: 'https://picsum.photos/400/200?random=42',
+    caption: 'One free Iced Coffee - subject to availability',
+    claimDate: '21/09/2025, 23:59',
+    status: 'Available',
+    badge: 'FREE',
+    badgeClass: 'free-badge',
+    callToActionLink: 'https://example.com/greggs-offer',
+    buttonText: 'Reveal offer'
+  },
+  {
+    id: 2,
+    image: 'https://picsum.photos/400/200?random=123',
+    caption: '2 for 1 on annual tickets at Twycross Zoo - subject to availability',
+    claimDate: '31/10/2025, 23:59',
+    status: 'All gone',
+    badge: '2 for 1',
+    badgeClass: 'offer-badge',
+    callToActionLink: null, // No link means no button will show
+    buttonText: 'Claim offer'
+  }
+];
+
+// Profile methods
+const openProfilePopover = () => {
+  isProfilePopoverOpen.value = true;
+};
+
+const editProfile = () => {
+  isProfilePopoverOpen.value = false;
+  console.log('Edit profile clicked');
+};
+
+const logout = () => {
+  isProfilePopoverOpen.value = false;
+  localStorage.removeItem('userId');
+  localStorage.removeItem('email');
+  localStorage.removeItem('PKEY');
+  localStorage.removeItem('PKEY_TEST');
+  localStorage.removeItem('PPID');
+  localStorage.removeItem('TXID');
+  window.location.href = '/login';
+};
+
+// Rewards methods
 const loadRewards = async () => {
   isLoading.value = true;
+  
   try {
-    const response = await fetch(
-      'https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/RewardsLists',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userid: userId, email })
-      }
-    );
-    const result = await response.json();
-    console.log('Rewards API response:', result);
-
-    if (Array.isArray(result) && result.length > 0) {
-      rewards.value = result.map((r, idx) => ({
-        id: r.id || idx,
-        image: r.image || '/src/assets/placeholder.png',
-        caption: r.caption || 'Reward',
-        claimDate: r.claimDate || '',
-        status: r.status || 'Available',
-        badge: r.badge || 'OFFER',
-        badgeClass: r.badgeClass || 'offer-badge',
-        callToActionLink: r.callToActionLink || null,
-        buttonText: r.buttonText || 'Reveal offer'
-      }));
-    } else {
-      rewards.value = [];
-    }
+    // TODO: Replace this with actual API call
+    // const response = await axios.post('your-api-endpoint', { userId });
+    // rewards.value = response.data;
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    rewards.value = sampleRewards;
+    
   } catch (error) {
     console.error('Error loading rewards:', error);
-    rewards.value = [];
-    // const toast = await toastController.create({
-    //   message: 'Failed to load rewards',
-    //   duration: 2000,
-    //   color: 'danger'
-    // });
-    // await toast.present();
+    const toast = await toastController.create({
+      message: 'Failed to load rewards',
+      duration: 2000,
+      color: 'danger'
+    });
+    await toast.present();
   } finally {
     isLoading.value = false;
   }
@@ -136,18 +179,21 @@ const loadRewards = async () => {
 
 const openRewardLink = (reward) => {
   if (reward.callToActionLink) {
+    // Add userId as a query parameter to the URL
     const url = new URL(reward.callToActionLink);
     url.searchParams.set('userid', userId);
     url.searchParams.set('email', email);
+    
+    // Open in new window/tab
     window.open(url.toString(), '_blank');
   }
 };
 
+// Lifecycle
 onMounted(() => {
   loadRewards();
 });
 </script>
-
 
 <style scoped>
 .custom-bg {
