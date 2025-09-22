@@ -88,7 +88,12 @@
         </ion-card>
 
 
-
+        <ReferalModal
+        v-model:isOpen="referralModalOpen"
+        :referralLink="referralLink"
+        :referral-code="referralCode"
+         @update:isOpen="referralModalOpen = $event"
+      />
       </div>
 
       <!-- Pagination Dots -->
@@ -322,7 +327,7 @@ const USEPROD_PAYSTACK = false; // Set to true for production
 const currentIndex = ref(0);
 const carouselRef = ref(null);
 const firstRewardImage = ref('https://picsum.photos/400/200?random=42');
-
+import ReferalModal from '@/components/ReferalModal.vue';
 import referFriendImage from '@/assets/refer-a-friend-01.jpeg'
 import cashBackImage from '@/assets/cash-back-01.jpeg';
 
@@ -350,6 +355,10 @@ const defaultScrollCards = [
   }
 ];
 
+const referralModalOpen = ref(false)
+const referralLink = ref("")
+const referralCode = ref("REF123XYZ"); // ✅ Mock referral code
+
 
 
 // Add after existing methods
@@ -371,24 +380,27 @@ const loadScrollCards = async () => {
 };
 
 const handleCardAction = (card) => {
-  console.log('Card action clicked:', card);
-  
-  if (card.action === 'refer' && card.weblink) {
-    // Open refer a friend page with userid parameter
+  console.log("Card action clicked:", card);
+
+  if (card.action === "refer" && card.weblink) {
+    // Instead of opening a new tab, show modal
     const url = new URL(card.weblink);
-    url.searchParams.set('userid', userId);
-    url.searchParams.set('email', email);
-    window.open(url.toString(), '_blank');
-  } else if (card.action === 'claim') {
+    url.searchParams.set("userid", userId);
+    url.searchParams.set("email", email);
+
+     referralLink.value = `https://quidly.com/referral?${userId}&code=${referralCode.value}`;
+    referralModalOpen.value = true;
+  } else if (card.action === "claim") {
     // Handle other actions
-    presentToast('Feature coming soon!', 'primary');
+    presentToast("Feature coming soon!", "primary");
   } else if (card.weblink) {
     // Generic weblink handler
     const url = new URL(card.weblink);
-    url.searchParams.set('userid', userId);
-    window.open(url.toString(), '_blank');
+    url.searchParams.set("userid", userId);
+    window.open(url.toString(), "_blank");
   }
 };
+
 
 // Add computed property for total cards count
 const totalCards = computed(() => {
