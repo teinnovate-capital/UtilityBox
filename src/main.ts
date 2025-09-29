@@ -47,7 +47,7 @@ import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
 
 import './assets/my-loaders.css'
-
+import { createPinia } from 'pinia'
 CapacitorApp.addListener('appUrlOpen', (event) => {
   if (!event || !event.url) return;
 
@@ -66,7 +66,8 @@ CapacitorApp.addListener('appUrlOpen', (event) => {
 
 const app = createApp(App)
   .use(IonicVue)
-  .use(router);
+  .use(router)
+  .use(createPinia());
 
 router.isReady().then(() => {
   app.mount('#app');

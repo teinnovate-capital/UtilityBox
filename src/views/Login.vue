@@ -102,7 +102,8 @@ import {
     toastController
 } from '@ionic/vue';
 import { ref } from 'vue';
-
+import { useUserStore } from '@/stores/user'
+const userStore = useUserStore()
 export default {
     name: 'LoginSignupPage',
     components: {
@@ -164,7 +165,6 @@ export default {
 
                 const result = await response.json();
                 console.log('register response:', result);
-
                 if (result.res) {
                 const toast = await toastController.create({
                     message: 'Signup successful! Please check your email to verify.',
@@ -222,6 +222,7 @@ export default {
                 console.log('login response:', result);
 
                 if (result.res) {
+                      userStore.setUser(result, email.value)
                 localStorage.setItem('userId', result.details);
                 localStorage.setItem('email', email.value);
                 const toast = await toastController.create({

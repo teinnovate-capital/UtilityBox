@@ -29,16 +29,20 @@
             placeholder="Select EDC"
             class="form-input custom-select"
           >
-            <ion-select-option 
-              v-for="edc in edcOptions" 
-              :key="edc.value" 
+            <ion-select-option
+              v-for="edc in edcOptions"
+              :key="edc.value"
               :value="edc.value"
             >
               {{ edc.label }}
             </ion-select-option>
           </ion-select>
 
-          <ion-button expand="block" class="validate-btn" @click="validateMeter">
+          <ion-button
+            expand="block"
+            class="validate-btn"
+            @click="validateMeter"
+          >
             Validate & Buy
           </ion-button>
         </ion-card-content>
@@ -49,22 +53,31 @@
         <!-- Card 1: Loyalty Points (unchanged) -->
         <ion-card class="carousel-card">
           <ion-card-content class="points-card-content">
-            <div class="points-label">Loyalty <br>Points</div>
+            <div class="points-label">Loyalty <br />Points</div>
             <div class="points-value">{{ loyaltypoints_sum }}</div>
-            <ion-button shape="round" size="small" class="redeem-btn">
+            <ion-button
+              shape="round"
+              size="small"
+              class="redeem-btn"
+              @click="openRedeemModal"
+            >
               REDEEM
             </ion-button>
           </ion-card-content>
         </ion-card>
 
         <!-- Dynamic Cards from API -->
-        <ion-card class="carousel-card" v-for="card in scrollCards" :key="card.id">
+        <ion-card
+          class="carousel-card"
+          v-for="card in scrollCards"
+          :key="card.id"
+        >
           <ion-card-content class="dynamic-card-content">
             <div
               class="card-bg"
               :style="{
                 backgroundImage: `url(${card.backgroundImage})`,
-                backgroundPosition: card.bgPos || '50% 45%'
+                backgroundPosition: card.bgPos || '50% 45%',
               }"
             >
               <!-- Bottom-right CTA button (refer) -->
@@ -73,7 +86,11 @@
                 class="action-btn"
                 shape="round"
                 size="small"
-                :class="[card.buttonColor === 'success' ? 'success-btn' : 'warning-btn']"
+                :class="[
+                  card.buttonColor === 'success'
+                    ? 'success-btn'
+                    : 'warning-btn',
+                ]"
                 @click="handleCardAction(card)"
               >
                 {{ card.ctaText }}
@@ -87,8 +104,17 @@
           </ion-card-content>
         </ion-card>
 
-
-
+        <ReferalModal
+          v-model:isOpen="referralModalOpen"
+          :referralLink="referralLink"
+          :referral-code="referralCode"
+          @update:isOpen="referralModalOpen = $event"
+        />
+        <RedeemModal
+          v-model:isOpen="redeemModalOpen"
+          :loyaltyPoints="loyaltypoints_sum"
+          @update:isOpen="redeemModalOpen = $event"
+        />
       </div>
 
       <!-- Pagination Dots -->
@@ -120,16 +146,16 @@
         :is-open="isModalOpen"
         :presenting-element="presentingEl"
         :backdrop-dismiss="false"
-        :breakpoints="[0,0.95,1]"
+        :breakpoints="[0, 0.95, 1]"
         :initial-breakpoint="0.95"
         class="fullscreen-modal"
       >
         <div class="modal-header">
           <h2>Buy Electricity</h2>
-          <ion-button 
-            fill="clear" 
-            size="default" 
-            @click="closeModal" 
+          <ion-button
+            fill="clear"
+            size="default"
+            @click="closeModal"
             class="close-button"
             :disabled="isLoading || isProcessingPayment || isProcessingTx"
           >
@@ -195,7 +221,10 @@
           </div>
 
           <!-- Payment Success State -->
-          <div v-else-if="paymentResult === 'success'" class="payment-result success">
+          <div
+            v-else-if="paymentResult === 'success'"
+            class="payment-result success"
+          >
             <div class="result-header">
               <h2 class="success-title">Transaction Successful!</h2>
             </div>
@@ -205,18 +234,31 @@
               <p><strong>Meter Number:</strong> {{ meterDetails.accountno }}</p>
               <p><strong>Transaction Ref:</strong> {{ paymentReference }}</p>
             </div>
-            <ion-button expand="block" color="success" @click="closeModal" class="centered-button">
+            <ion-button
+              expand="block"
+              color="success"
+              @click="closeModal"
+              class="centered-button"
+            >
               Done
             </ion-button>
           </div>
 
           <!-- Payment Failed State -->
-          <div v-else-if="paymentResult === 'failed'" class="payment-result failed">
+          <div
+            v-else-if="paymentResult === 'failed'"
+            class="payment-result failed"
+          >
             <div class="result-header">
               <h2 class="failed-title">Payment Failed</h2>
             </div>
             <p class="centered-element">{{ paymentErrorMessage }}</p>
-            <ion-button expand="block" color="danger" @click="resetPayment" class="centered-button">
+            <ion-button
+              expand="block"
+              color="danger"
+              @click="resetPayment"
+              class="centered-button"
+            >
               Try Again
             </ion-button>
           </div>
@@ -224,12 +266,21 @@
           <!-- Validated Details State (your existing content) -->
           <div v-else class="validated-details">
             <h5 class="validated-title">Validated</h5>
-            <p><strong class="subheading">Meter Customer Name</strong> <br> {{ meterDetails.responsename }}</p>
-            <p><strong>Meter Number:</strong> <br> {{ meterDetails.accountno }}</p>
-            <p><strong>Address:</strong> <br> {{ meterDetails.responseaddr }}</p>
-            <br>
+            <p>
+              <strong class="subheading">Meter Customer Name</strong> <br />
+              {{ meterDetails.responsename }}
+            </p>
+            <p>
+              <strong>Meter Number:</strong> <br />
+              {{ meterDetails.accountno }}
+            </p>
+            <p>
+              <strong>Address:</strong> <br />
+              {{ meterDetails.responseaddr }}
+            </p>
+            <br />
             <p class="centered-element">{{ email }}</p>
-            <br>
+            <br />
             <p class="centered-element">Minimum Amount: ₦{{ min_amount }}</p>
 
             <ion-input
@@ -239,14 +290,18 @@
               class="centered-input"
             ></ion-input>
 
-            <p class="centered-element"><em>₦100 - convenience fee will be added to total.</em></p>
+            <p class="centered-element">
+              <em>₦100 - convenience fee will be added to total.</em>
+            </p>
 
-            <ion-button 
-              expand="block" 
-              color="primary" 
-              @click="processPayment" 
+            <ion-button
+              expand="block"
+              color="primary"
+              @click="processPayment"
               class="centered-button"
-              :disabled="!enteredAmount || enteredAmount < meterDetails.minimum_amount"
+              :disabled="
+                !enteredAmount || enteredAmount < meterDetails.minimum_amount
+              "
             >
               <span v-if="!isProcessingPayment">Continue to Payment</span>
               <span v-else>Processing...</span>
@@ -275,45 +330,53 @@ import {
   toastController,
   IonPopover,
   IonList,
-  IonLabel
-} from '@ionic/vue';
+  IonLabel,
+} from "@ionic/vue";
 
-import { closeCircle, personCircle, personOutline, logOutOutline} from 'ionicons/icons';
-import axios from 'axios';
+import {
+  closeCircle,
+  personCircle,
+  personOutline,
+  logOutOutline,
+} from "ionicons/icons";
+import axios from "axios";
 
-import { ref, onMounted, computed  } from 'vue';
+import { ref, onMounted, computed } from "vue";
 
-import HeaderComponent from '../components/HeaderComponent.vue';
-
+import HeaderComponent from "../components/HeaderComponent.vue";
+import RedeemModal from "@/components/RedeemModal.vue";
 const presentingEl = ref();
-const email = localStorage.getItem('email') || '';
-const userId = localStorage.getItem('userId') || '';
-const loyaltypoints_sum = ref(0)
-
+const email = localStorage.getItem("email") || "";
+const userId = localStorage.getItem("userId") || "";
+const loyaltypoints_sum = ref(0);
+const redeemModalOpen = ref(false);
+const openRedeemModal = () => {
+  redeemModalOpen.value = true;
+};
 
 const min_amount = ref(0);
 
 const isPrepaid = ref(true);
-const meterNo = ref('');
-const selectedEdc = ref('');
-const enteredAmount = ref('');
+const meterNo = ref("");
+const selectedEdc = ref("");
+const enteredAmount = ref("");
 
 const isModalOpen = ref(false);
 const isLoading = ref(false);
 const meterDetails = ref({});
-const amount = ref('');
+const amount = ref("");
 
 // Add these after line 44 (after const amount = ref('');)
 const isProcessingPayment = ref(false);
 const isProcessingTx = ref(false);
 const processingTimeout = ref(null);
-const txErrorMessage = ref(""); 
+const txErrorMessage = ref("");
 
 const paymentResult = ref(null); // 'success', 'failed', or null
-const paymentReference = ref('');
-const purchaseToken = ref('');
-const paymentErrorMessage = ref('');
-const currentTxId = ref('');
+const paymentReference = ref("");
+const purchaseToken = ref("");
+const paymentErrorMessage = ref("");
+const currentTxId = ref("");
 
 // Configuration - Replace with your actual Flutterwave keys
 
@@ -321,36 +384,39 @@ const USEPROD_PAYSTACK = false; // Set to true for production
 
 const currentIndex = ref(0);
 const carouselRef = ref(null);
-const firstRewardImage = ref('https://picsum.photos/400/200?random=42');
-
-import referFriendImage from '@/assets/refer-a-friend-01.jpeg'
-import cashBackImage from '@/assets/cash-back-01.jpeg';
-
+const firstRewardImage = ref("https://picsum.photos/400/200?random=42");
+import ReferalModal from "@/components/ReferalModal.vue";
+import referFriendImage from "@/assets/refer-a-friend-01.jpeg";
+import cashBackImage from "@/assets/cash-back-01.jpeg";
+import { useUserStore } from "@/stores/user";
+const userStore = useUserStore();
 // Add after existing variables
 const scrollCards = ref([]);
 const defaultScrollCards = [
   {
     id: 1,
-    type: 'refer',
-    ctaType: 'button',
-    ctaText: 'Refer & Earn',
-    buttonColor: 'success',
-    action: 'refer',
-    weblink: 'https://example.com/refer-friend',
+    type: "refer",
+    ctaType: "button",
+    ctaText: "Refer & Earn",
+    buttonColor: "success",
+    action: "refer",
+    weblink: "https://example.com/refer-friend",
     backgroundImage: referFriendImage,
-    bgPos: '50% 42%' // show more of the image; tweak per image
+    bgPos: "50% 42%", // show more of the image; tweak per image
   },
   {
     id: 2,
-    type: 'cashback',
-    ctaType: 'label',
-    ctaText: 'Cashback on all purchases',
+    type: "cashback",
+    ctaType: "label",
+    ctaText: "Cashback on all purchases",
     backgroundImage: cashBackImage,
-    bgPos: '50% 50%'
-  }
+    bgPos: "50% 50%",
+  },
 ];
 
-
+const referralModalOpen = ref(false);
+const referralLink = ref("");
+const referralCode = computed(() => userStore.detailsSec);
 
 // Add after existing methods
 const loadScrollCards = async () => {
@@ -358,35 +424,37 @@ const loadScrollCards = async () => {
     // TODO: Replace with actual API call
     // const response = await axios.post('your-scroll-cards-api-endpoint', { userId });
     // scrollCards.value = response.data;
-    
+
     // Simulate API delay and use default data for now
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     scrollCards.value = defaultScrollCards;
-    
-    console.log('Scroll cards loaded:', scrollCards.value);
+
+    console.log("Scroll cards loaded:", scrollCards.value);
   } catch (error) {
-    console.error('Error loading scroll cards, using defaults:', error);
+    console.error("Error loading scroll cards, using defaults:", error);
     scrollCards.value = defaultScrollCards;
   }
 };
 
 const handleCardAction = (card) => {
-  console.log('Card action clicked:', card);
-  
-  if (card.action === 'refer' && card.weblink) {
-    // Open refer a friend page with userid parameter
+  console.log("Card action clicked:", card);
+
+  if (card.action === "refer" && card.weblink) {
+    // Instead of opening a new tab, show modal
     const url = new URL(card.weblink);
-    url.searchParams.set('userid', userId);
-    url.searchParams.set('email', email);
-    window.open(url.toString(), '_blank');
-  } else if (card.action === 'claim') {
+    url.searchParams.set("userid", userId);
+    url.searchParams.set("email", email);
+
+    referralLink.value = `https://www.utilitybox.ng/r/${referralCode.value}`;
+    referralModalOpen.value = true;
+  } else if (card.action === "claim") {
     // Handle other actions
-    presentToast('Feature coming soon!', 'primary');
+    presentToast("Feature coming soon!", "primary");
   } else if (card.weblink) {
     // Generic weblink handler
     const url = new URL(card.weblink);
-    url.searchParams.set('userid', userId);
-    window.open(url.toString(), '_blank');
+    url.searchParams.set("userid", userId);
+    window.open(url.toString(), "_blank");
   }
 };
 
@@ -398,12 +466,12 @@ const totalCards = computed(() => {
 // Remove the old hardcoded scrollCards array
 // const scrollCards = ['Card 2', 'Card 3', 'Card 4'];
 
-const presentToast = async (message, color = 'danger') => {
+const presentToast = async (message, color = "danger") => {
   const toast = await toastController.create({
     message,
     duration: 2500,
     color,
-    position: 'top',
+    position: "top",
   });
   return toast.present();
 };
@@ -412,16 +480,20 @@ const presentValidationFailToast = async (message) => {
   const toast = await toastController.create({
     message,
     duration: 3000, // auto dismiss after 3s
-    color: 'danger',
-    position: 'top',
+    color: "danger",
+    position: "top",
   });
   return toast.present();
 };
 
 const safeParse = (v) => {
   if (!v) return null;
-  if (typeof v === 'object') return v;
-  try { return JSON.parse(v); } catch { return null; }
+  if (typeof v === "object") return v;
+  try {
+    return JSON.parse(v);
+  } catch {
+    return null;
+  }
 };
 
 // Pull human-readable error from the EDC payload (handles double-encoded JSON)
@@ -436,10 +508,12 @@ const extractEdcError = (jsonresponse) => {
   const inner = safeParse(content);
   if (inner) content = inner;
 
-  const msg = (content && (content.error || content.message)) || outer.error || outer.message;
-  return (typeof msg === 'string') ? msg : null;
+  const msg =
+    (content && (content.error || content.message)) ||
+    outer.error ||
+    outer.message;
+  return typeof msg === "string" ? msg : null;
 };
-
 
 const handleScroll = () => {
   if (!carouselRef.value) return;
@@ -448,48 +522,42 @@ const handleScroll = () => {
   currentIndex.value = Math.round(scrollLeft / cardWidth);
 };
 
-
-const getloyaltypoints = async() => {
-
+const getloyaltypoints = async () => {
   const data = {
-    userid: userId
+    userid: userId,
   };
 
-  
   try {
     const res = await axios.post(
-      'https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/GetUserLoyaltyPointsSum',
+      "https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/GetUserLoyaltyPointsSum",
       data,
       {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       }
     );
 
-    console.log('getloyaltypoints :', res.data )
+    console.log("getloyaltypoints :", res.data);
 
     if (Array.isArray(res.data)) {
       loyaltypoints_sum.value = res.data[0];
       console.log("✅ Loaded transactions:", res.data);
     } else {
-      console.error('❌ Unexpected response format:', res.data);
+      console.error("❌ Unexpected response format:", res.data);
     }
   } catch (err) {
-    console.error('❌ Failed to fetch transactions:', err);
+    console.error("❌ Failed to fetch transactions:", err);
   } finally {
     isLoading.value = false;
   }
-
-
-
-}
+};
 
 const edcOptions = ref([
-  { value: 'abujaedc', label: 'Abuja' },
-  { value: 'ikejaedc', label: 'Lagos-Ikeja' },
-  { value: 'ekoedc', label: 'Lagos-Eko' },
-  { value: 'enuguedc', label: 'Enugu' },
-  { value: 'ibadanedc', label: 'Ibadan' },
-  { value: 'phedc', label: 'Port Harcourt' }
+  { value: "abujaedc", label: "Abuja" },
+  { value: "ikejaedc", label: "Lagos-Ikeja" },
+  { value: "ekoedc", label: "Lagos-Eko" },
+  { value: "enuguedc", label: "Enugu" },
+  { value: "ibadanedc", label: "Ibadan" },
+  { value: "phedc", label: "Port Harcourt" },
 ]);
 
 const loadEdcOptions = async () => {
@@ -497,21 +565,20 @@ const loadEdcOptions = async () => {
     // TODO: Replace with actual API call
     // const response = await axios.get('your-edc-api-endpoint');
     // edcOptions.value = response.data;
-    
-    console.log('EDC options loaded:', edcOptions.value);
+
+    console.log("EDC options loaded:", edcOptions.value);
   } catch (error) {
-    console.error('Error loading EDC options:', error);
+    console.error("Error loading EDC options:", error);
   }
 };
 
 onMounted(() => {
-  presentingEl.value = document.querySelector('ion-page');
+  presentingEl.value = document.querySelector("ion-page");
 
   // call loyalty point details
   getloyaltypoints();
   // loadEdcOptions(); // Uncomment when you want to load from API
-  loadScrollCards(); 
-
+  loadScrollCards();
 });
 
 // const validateMeter = async () => {
@@ -528,7 +595,7 @@ onMounted(() => {
 //     email: email || 'support@utilitybox.ng',
 //     pid: selectedEdc.value,
 //     pre_post: isPrepaid.value ? 'prepaid' : 'postpaid',
-//     processedby: "quidlymobie", 
+//     processedby: "quidlymobie",
 //     terminal: "quidlymobile",
 //     userid: userId,
 //     origuserid: "quickbuy"
@@ -570,7 +637,9 @@ onMounted(() => {
 
 const validateMeter = async () => {
   if (!meterNo.value || !selectedEdc.value) {
-    await presentValidationFailToast('Please enter meter number and select EDC');
+    await presentValidationFailToast(
+      "Please enter meter number and select EDC"
+    );
     return;
   }
 
@@ -580,24 +649,24 @@ const validateMeter = async () => {
 
   const data = {
     accountno: meterNo.value,
-    email: email || 'support@utilitybox.ng',
+    email: email || "support@utilitybox.ng",
     pid: selectedEdc.value,
-    pre_post: isPrepaid.value ? 'prepaid' : 'postpaid',
-    processedby: 'quidlymobile',
-    terminal: 'quidlymobile',
+    pre_post: isPrepaid.value ? "prepaid" : "postpaid",
+    processedby: "quidlymobile",
+    terminal: "quidlymobile",
     userid: userId,
-    origuserid: 'quickbuy',
+    origuserid: "quickbuy",
   };
 
   try {
     const res = await axios.post(
-      'https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/TxValidate',
+      "https://srwv0srmfl.execute-api.us-west-2.amazonaws.com/Prod/TxValidate",
       data,
-      { headers: { 'Content-Type': 'application/json' } }
+      { headers: { "Content-Type": "application/json" } }
     );
 
     const d = res.data;
-    console.log('✅ Validation response:', d);
+    console.log("✅ Validation response:", d);
 
     // ⚠️ Don’t trust status alone (can be 1 on failures in some backends)
     const valid = !!(d && d.responsename && d.accountno);
@@ -605,27 +674,27 @@ const validateMeter = async () => {
     if (valid) {
       meterDetails.value = d;
       min_amount.value = Number(d.minimum_amount || 0).toFixed(2);
-      localStorage.setItem('PKEY', d.pubkey);
-      localStorage.setItem('PKEY_TEST', d.pubkey_test);
-      localStorage.setItem('PPID', d.ppid);
-      localStorage.setItem('TXID', d.txid);
+      localStorage.setItem("PKEY", d.pubkey);
+      localStorage.setItem("PKEY_TEST", d.pubkey_test);
+      localStorage.setItem("PPID", d.ppid);
+      localStorage.setItem("TXID", d.txid);
       // keep modal open and show details (loader will stop in finally)
     } else {
       const edcMsg =
         extractEdcError(d && d.jsonresponse) ||
         d?.message ||
-        'Validation failed';
-      isModalOpen.value = false;                    // close on failure
-      await presentValidationFailToast(edcMsg);     // show real upstream msg
+        "Validation failed";
+      isModalOpen.value = false; // close on failure
+      await presentValidationFailToast(edcMsg); // show real upstream msg
     }
   } catch (err) {
-    console.error('Validation error:', err);
+    console.error("Validation error:", err);
     const d = err && err.response && err.response.data;
     const edcMsg =
       extractEdcError(d && d.jsonresponse) ||
       (d && d.message) ||
       err.message ||
-      'An error occurred during validation.';
+      "An error occurred during validation.";
     isModalOpen.value = false;
     await presentValidationFailToast(edcMsg);
   } finally {
@@ -634,32 +703,32 @@ const validateMeter = async () => {
 };
 
 const generateTxId = () => {
-  return 'TX_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  return "TX_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 };
 
 // 🔥 ADD THIS DEBUG FUNCTION TO YOUR IONIC COMPONENT
 const debugQuidlyInputs = () => {
-  console.log('🔍 Debugging Quidly inputs in Ionic...');
-  
+  console.log("🔍 Debugging Quidly inputs in Ionic...");
+
   // Wait a bit more for Vue to render
   setTimeout(() => {
-    const inputs = document.querySelectorAll('#quidly-pay-modal input');
+    const inputs = document.querySelectorAll("#quidly-pay-modal input");
     console.log(`Found ${inputs.length} Quidly inputs`);
-    
+
     if (inputs.length === 0) {
-      console.log('❌ No Quidly inputs found! Trying again...');
+      console.log("❌ No Quidly inputs found! Trying again...");
       setTimeout(debugQuidlyInputs, 2000);
       return;
     }
-    
+
     inputs.forEach((input, index) => {
       console.log(`\n📝 Quidly Input ${index}:`, input);
-      console.log('Placeholder:', input.placeholder);
-      console.log('Type:', input.type);
-      
+      console.log("Placeholder:", input.placeholder);
+      console.log("Type:", input.type);
+
       // Check computed styles
       const styles = window.getComputedStyle(input);
-      console.log('🎨 Critical styles:', {
+      console.log("🎨 Critical styles:", {
         pointerEvents: styles.pointerEvents,
         touchAction: styles.touchAction,
         userSelect: styles.userSelect,
@@ -672,122 +741,138 @@ const debugQuidlyInputs = () => {
         opacity: styles.opacity,
         background: styles.backgroundColor,
         border: styles.border,
-        transform: styles.transform
+        transform: styles.transform,
       });
-      
+
       // Check element properties
-      console.log('📋 Element properties:', {
+      console.log("📋 Element properties:", {
         disabled: input.disabled,
         readOnly: input.readOnly,
         tabIndex: input.tabIndex,
         offsetParent: input.offsetParent,
         clientHeight: input.clientHeight,
-        clientWidth: input.clientWidth
+        clientWidth: input.clientWidth,
       });
-      
+
       // Test focus
       try {
         const originalActiveElement = document.activeElement;
         input.focus();
         const focusSuccessful = document.activeElement === input;
-        console.log(`🎯 Focus test for input ${index}:`, focusSuccessful ? '✅ SUCCESS' : '❌ FAILED');
-        
+        console.log(
+          `🎯 Focus test for input ${index}:`,
+          focusSuccessful ? "✅ SUCCESS" : "❌ FAILED"
+        );
+
         if (!focusSuccessful) {
-          console.log('Active element is:', document.activeElement);
+          console.log("Active element is:", document.activeElement);
         }
       } catch (e) {
         console.log(`❌ Focus error for input ${index}:`, e);
       }
-      
+
       // Test click detection
-      input.addEventListener('click', (e) => {
-        console.log(`🖱️ Input ${index} clicked!`, e);
-        console.log('Event target:', e.target);
-        console.log('Current target:', e.currentTarget);
-      }, { once: true });
-      
-      input.addEventListener('touchstart', (e) => {
-        console.log(`👆 Input ${index} touched!`, e);
-      }, { once: true });
-      
-      input.addEventListener('focus', (e) => {
-        console.log(`🎯 Input ${index} focused!`, e);
-      }, { once: true });
-      
-      input.addEventListener('input', (e) => {
+      input.addEventListener(
+        "click",
+        (e) => {
+          console.log(`🖱️ Input ${index} clicked!`, e);
+          console.log("Event target:", e.target);
+          console.log("Current target:", e.currentTarget);
+        },
+        { once: true }
+      );
+
+      input.addEventListener(
+        "touchstart",
+        (e) => {
+          console.log(`👆 Input ${index} touched!`, e);
+        },
+        { once: true }
+      );
+
+      input.addEventListener(
+        "focus",
+        (e) => {
+          console.log(`🎯 Input ${index} focused!`, e);
+        },
+        { once: true }
+      );
+
+      input.addEventListener("input", (e) => {
         console.log(`⌨️ Input ${index} value changed:`, e.target.value);
       });
     });
-    
+
     // Check for Ionic interference
-    console.log('\n🅰️ Checking Ionic interference...');
-    
+    console.log("\n🅰️ Checking Ionic interference...");
+
     // Check ion-content
-    const ionContent = document.querySelector('ion-content');
+    const ionContent = document.querySelector("ion-content");
     if (ionContent) {
       const ionStyles = window.getComputedStyle(ionContent);
-      console.log('ion-content styles:', {
+      console.log("ion-content styles:", {
         pointerEvents: ionStyles.pointerEvents,
         touchAction: ionStyles.touchAction,
         zIndex: ionStyles.zIndex,
-        overflow: ionStyles.overflow
+        overflow: ionStyles.overflow,
       });
     }
-    
+
     // Check ion-page
-    const ionPage = document.querySelector('ion-page');
+    const ionPage = document.querySelector("ion-page");
     if (ionPage) {
       const pageStyles = window.getComputedStyle(ionPage);
-      console.log('ion-page styles:', {
+      console.log("ion-page styles:", {
         pointerEvents: pageStyles.pointerEvents,
         touchAction: pageStyles.touchAction,
-        zIndex: pageStyles.zIndex
+        zIndex: pageStyles.zIndex,
       });
     }
-    
+
     // Check for overlaying elements
-    const modal = document.getElementById('quidly-pay-modal');
+    const modal = document.getElementById("quidly-pay-modal");
     if (modal) {
       const modalStyles = window.getComputedStyle(modal);
-      console.log('🏠 Quidly modal styles:', {
+      console.log("🏠 Quidly modal styles:", {
         pointerEvents: modalStyles.pointerEvents,
         touchAction: modalStyles.touchAction,
         zIndex: modalStyles.zIndex,
         position: modalStyles.position,
-        transform: modalStyles.transform
+        transform: modalStyles.transform,
       });
     }
-    
   }, 500);
 };
 
 // 🔥 ADD THIS QUICK TEST FUNCTION TOO
 const testQuidlyInputDirectly = () => {
-  console.log('\n🚀 Testing Quidly input directly...');
-  
-  const input = document.querySelector('#quidly-pay-modal input[placeholder*="Card"]');
+  console.log("\n🚀 Testing Quidly input directly...");
+
+  const input = document.querySelector(
+    '#quidly-pay-modal input[placeholder*="Card"]'
+  );
   if (input) {
-    console.log('Found card input:', input);
-    
+    console.log("Found card input:", input);
+
     // Force style override test
-    input.style.pointerEvents = 'auto';
-    input.style.touchAction = 'manipulation';
-    input.style.zIndex = '999999';
-    input.style.position = 'relative';
-    input.style.background = 'yellow'; // Visual indicator
-    input.style.border = '2px solid red';
-    
-    console.log('Applied test styles - input should be yellow with red border');
-    
+    input.style.pointerEvents = "auto";
+    input.style.touchAction = "manipulation";
+    input.style.zIndex = "999999";
+    input.style.position = "relative";
+    input.style.background = "yellow"; // Visual indicator
+    input.style.border = "2px solid red";
+
+    console.log("Applied test styles - input should be yellow with red border");
+
     // Try to type
     input.focus();
-    input.value = 'TEST123';
-    console.log('Set test value:', input.value);
-    
+    input.value = "TEST123";
+    console.log("Set test value:", input.value);
+
     // Trigger input event
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event("input", { bubbles: true }));
   } else {
-    console.log('❌ Card input not found');
+    console.log("❌ Card input not found");
   }
 };
 
@@ -807,24 +892,26 @@ const logPayment = async (dataDb) => {
     console.error("❌ logPayment error:", error);
     completePayment(error);
     throw error;
-
   }
 };
 
 // Simplified processPayment function for Ionic - now as simple as Flutterwave!
 const processPayment = async () => {
-  const PKEY_TEST = localStorage.getItem('PKEY_TEST') || '';
-  const PKEY = localStorage.getItem('PKEY') || '';
-  const PPID = localStorage.getItem('PPID') || 'flutter';
-  const TXID = localStorage.getItem('TXID'); 
+  const PKEY_TEST = localStorage.getItem("PKEY_TEST") || "";
+  const PKEY = localStorage.getItem("PKEY") || "";
+  const PPID = localStorage.getItem("PPID") || "flutter";
+  const TXID = localStorage.getItem("TXID");
 
-  if (!enteredAmount.value || enteredAmount.value < meterDetails.value.minimum_amount) {
-    alert('Please enter a valid amount');
+  if (
+    !enteredAmount.value ||
+    enteredAmount.value < meterDetails.value.minimum_amount
+  ) {
+    alert("Please enter a valid amount");
     return;
   }
 
   // Generate transaction ID
-  currentTxId.value = localStorage.getItem('TXID'); //generateTxId();
+  currentTxId.value = localStorage.getItem("TXID"); //generateTxId();
   isProcessingPayment.value = true;
 
   const amountInKobo = parseFloat(enteredAmount.value) * 100;
@@ -851,15 +938,17 @@ const processPayment = async () => {
   };
 
   try {
-
     const txResponse = await logPayment(dataDb);
 
-    if (txResponse === "no_existing_transaction" || txResponse === "edc_service_not_available") {
+    if (
+      txResponse === "no_existing_transaction" ||
+      txResponse === "edc_service_not_available"
+    ) {
       alert("⚠ Transaction could not be started: " + txResponse);
       return;
     }
 
-    if (PPID === 'flutter') {
+    if (PPID === "flutter") {
       const publicKey = USEPROD_PAYSTACK ? PKEY : PKEY_TEST;
 
       FlutterwaveCheckout({
@@ -872,36 +961,40 @@ const processPayment = async () => {
           title: "TCL-UtilityBox",
           description: "Payment for Electricity",
         },
-        onclose: () => { isProcessingPayment.value = false; },
-        callback: (response) => { handlePaymentCallback(response); }
+        onclose: () => {
+          isProcessingPayment.value = false;
+        },
+        callback: (response) => {
+          handlePaymentCallback(response);
+        },
       });
-    }
-    else if (PPID === 'quidly') {
+    } else if (PPID === "quidly") {
       window.embedQuidlyPay.initialize({
         key: PKEY_TEST,
         email,
         amount: totalAmount,
-        currency_code: 'NGN',
-        onload:  () => console.log('loaded'),
-        onclose: () => { isProcessingPayment.value = false },
-        callback: (res) => handleQuidlyPaymentCallback(res)
+        currency_code: "NGN",
+        onload: () => console.log("loaded"),
+        onclose: () => {
+          isProcessingPayment.value = false;
+        },
+        callback: (res) => handleQuidlyPaymentCallback(res),
       });
-    }
-    else {
+    } else {
       throw new Error(`Unsupported payment processor: ${PPID}`);
     }
-
   } catch (error) {
-    console.error('Payment initialization error:', error);
+    console.error("Payment initialization error:", error);
     isProcessingPayment.value = false;
-    paymentResult.value = 'failed';
-    paymentErrorMessage.value = error.message || 'Error initializing payment gateway';
+    paymentResult.value = "failed";
+    paymentErrorMessage.value =
+      error.message || "Error initializing payment gateway";
     completePayment(error);
   }
 };
 
 const handlePaymentCallback = async (response) => {
-  console.log('Payment callback response:', response);
+  console.log("Payment callback response:", response);
   isProcessingTx.value = true;
   txErrorMessage.value = "";
   // Start 2-minute timeout when processing starts
@@ -913,11 +1006,11 @@ const handlePaymentCallback = async (response) => {
     isProcessingTx.value = false;
     // showCloseButton.value = true; // re-enable close
     // alert("Error during transaction processing. Please contact support.");
-    txErrorMessage.value = "Error during transaction processing. Please contact support.";
-
+    txErrorMessage.value =
+      "Error during transaction processing. Please contact support.";
   }, 120000); // 2 minutes
-  
-  let payRef = '';
+
+  let payRef = "";
   let status = 0;
 
   // Extract payment reference and status from response
@@ -935,8 +1028,8 @@ const handlePaymentCallback = async (response) => {
     await processSuccessfulPayment(response);
   } else {
     // Handle failed payment
-    paymentResult.value = 'failed';
-    paymentErrorMessage.value = 'Payment was not successful';
+    paymentResult.value = "failed";
+    paymentErrorMessage.value = "Payment was not successful";
     isProcessingPayment.value = false;
     isProcessingTx.value = false;
 
@@ -944,47 +1037,56 @@ const handlePaymentCallback = async (response) => {
       clearTimeout(processingTimeout.value);
       processingTimeout.value = null;
     }
-
   }
 };
 
 const handleQuidlyPaymentCallback = async (response) => {
-  console.log('Quidly Payment callback response:', response);
-  
+  console.log("Quidly Payment callback response:", response);
+
   // // ✅ CHECK FOR ERRORS FIRST - before setting any processing states
   // if (response && response.status === 'error') {
   //   console.log('Quidly payment initialization failed:', response.message);
-    
+
   //   // Stop all processing states
   //   isProcessingPayment.value = false;
   //   isProcessingTx.value = false;
-    
+
   //   // Show error result
   //   paymentResult.value = 'failed';
   //   paymentErrorMessage.value = response.message || 'Payment initialization failed';
-    
+
   //   // Clear any timeouts
   //   if (processingTimeout.value) {
   //     clearTimeout(processingTimeout.value);
   //     processingTimeout.value = null;
   //   }
-    
+
   //   return; // ✅ Exit early - don't continue processing
   // }
 
-  let payRef = '';
+  let payRef = "";
   let status = 0;
 
   // Extract payment reference and status from Quidly response
   // Adjust these fields based on Quidly's actual response structure
   if (response && response.reference) {
     payRef = response.reference;
-    if (response.status === "successful" || response.status === "success" || response.status == '1' || response.status === 1) {
+    if (
+      response.status === "successful" ||
+      response.status === "success" ||
+      response.status == "1" ||
+      response.status === 1
+    ) {
       status = 1;
     }
   } else if (response && response.status) {
     payRef = response.data.quidly_ref;
-    if (response.status === "successful" || response.status === "success" || response.status == '1' || response.status === 1) {
+    if (
+      response.status === "successful" ||
+      response.status === "success" ||
+      response.status == "1" ||
+      response.status === 1
+    ) {
       status = 1;
     }
   }
@@ -1000,8 +1102,9 @@ const handleQuidlyPaymentCallback = async (response) => {
     await processSuccessfulPayment(response);
   } else {
     // Handle failed payment
-    paymentResult.value = 'failed';
-    paymentErrorMessage.value = response.message || 'Payment was not successful';
+    paymentResult.value = "failed";
+    paymentErrorMessage.value =
+      response.message || "Payment was not successful";
     isProcessingPayment.value = false;
     isProcessingTx.value = false;
   }
@@ -1018,16 +1121,13 @@ const validateToken3 = async (dataDb) => {
     );
 
     console.log("✅ validateToken3 response:", res.data);
-    if ((res.data.txid !== '') && (res.data.verifystatus == 1)){
+    if (res.data.txid !== "" && res.data.verifystatus == 1) {
       await processTx(res.data);
-    }
-    else{
+    } else {
       paymentErrorMessage.value =
         "Transaction Failed after Payment - Please contact support@utilitybox.ng";
       //completePayment(paymentErrorMessage.value);
     }
-    
-
   } catch (err) {
     console.error("❌ validateToken3 error:", err);
     completePayment(err);
@@ -1046,7 +1146,6 @@ const processTx = async (dataDb) => {
 
     console.log("✅ processTx response:", res.data);
     completePayment(res.data);
-
   } catch (err) {
     console.error("❌ processTx error:", err);
     if (err.code === "ECONNABORTED") {
@@ -1066,7 +1165,6 @@ const completePayment = (dt) => {
   const edt = new Date().toLocaleString();
 
   if (dt.verifystatus === 1) {
-    
     if (dt.status_disco === 1) {
       // Success with token
       purchaseToken.value = dt.token;
@@ -1082,7 +1180,7 @@ const completePayment = (dt) => {
   } else {
     // Flutter verify failed
     paymentResult.value = "failed";
-    
+
     if (dt === "timeout") {
       paymentErrorMessage.value =
         "Transaction Timeout - Please check email for token or contact support@utilitybox.ng";
@@ -1096,7 +1194,7 @@ const completePayment = (dt) => {
 const processSuccessfulPayment = async (response) => {
   const dataDb = {
     txid: currentTxId.value,
-    origuserid: "quickbuy", //userId || 
+    origuserid: "quickbuy", //userId ||
     userid: userId,
     email: email,
     pid: selectedEdc.value,
@@ -1118,8 +1216,6 @@ const processSuccessfulPayment = async (response) => {
 
   await validateToken3(dataDb);
 };
-
-
 
 // const processSuccessfulPayment = async (response) => {
 //   const paymentData = {
@@ -1165,9 +1261,9 @@ const processSuccessfulPayment = async (response) => {
 
 const resetPayment = () => {
   paymentResult.value = null;
-  paymentReference.value = '';
-  purchaseToken.value = '';
-  paymentErrorMessage.value = '';
+  paymentReference.value = "";
+  purchaseToken.value = "";
+  paymentErrorMessage.value = "";
   isProcessingPayment.value = false;
 
   txErrorMessage.value = "";
@@ -1179,9 +1275,8 @@ const closeModal = () => {
   resetPayment();
   isLoading.value = false;
   meterDetails.value = {};
-  enteredAmount.value = '';
+  enteredAmount.value = "";
 };
-
 </script>
 
 <style scoped>
@@ -1225,9 +1320,8 @@ const closeModal = () => {
 .validate-btn {
   border-radius: 10px;
   font-weight: 600;
-  --background: orange
+  --background: orange;
 }
-
 
 /* 🔁 Carousel Cards */
 .carousel-container {
@@ -1273,7 +1367,7 @@ const closeModal = () => {
   border-radius: 20px;
   font-size: 14px;
   padding: 0 16px;
-  --background: orange
+  --background: orange;
 }
 
 /* Pagination Dots */
@@ -1385,13 +1479,13 @@ const closeModal = () => {
   margin: 8px 0;
 }
 
-.validated-details strong{
+.validated-details strong {
   color: #ec405f;
 }
 
-.validated-details label{
+.validated-details label {
   align-items: center;
-  margin-left:24px;
+  margin-left: 24px;
   padding-left: 24px;
 }
 
@@ -1403,8 +1497,6 @@ const closeModal = () => {
   display: inline-block;
   margin-bottom: 16px;
 }
-
-
 
 /* Title and key centered items */
 .centered-element {
@@ -1430,7 +1522,6 @@ const closeModal = () => {
   --highlight-padding: 12px;
 }
 
-
 .centered-button {
   display: block;
   margin: 20px auto;
@@ -1441,7 +1532,7 @@ const closeModal = () => {
   --border-radius: 30px;
 
   /* Button color */
-  --background: #5100ff; 
+  --background: #5100ff;
   --color: white;
 
   /* Drop shadow applied properly */
@@ -1458,15 +1549,13 @@ const closeModal = () => {
   transition: all 0.3s ease;
 }
 
-    
-    
 .note-text {
   font-size: 0.9rem;
   color: #666;
   margin-top: 4px;
 }
 
-.subheading{
+.subheading {
   color: #ec407a;
 }
 
@@ -1531,8 +1620,6 @@ const closeModal = () => {
   color: #666;
 }
 
-
-
 /* Add these to your <style scoped> section or global CSS */
 
 /* Quidly Widget Input Fixes */
@@ -1552,13 +1639,13 @@ const closeModal = () => {
   user-select: text !important;
   touch-action: manipulation !important;
   pointer-events: auto !important;
-  
+
   /* Remove iOS tap highlights that might interfere */
   -webkit-tap-highlight-color: transparent;
-  
+
   /* Ensure proper focus behavior */
   outline: none;
-  
+
   /* Prevent zoom on iOS */
   font-size: 16px;
 }
@@ -1568,7 +1655,7 @@ const closeModal = () => {
 #quidly-widget-container select:focus {
   /* Visual feedback for focused elements */
   border-color: #007bff !important;
-  box-shadow: 0 0 0 2px rgba(0,123,255,0.25) !important;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
 }
 
 /* Fix for any iframe that Quidly might use */
@@ -1597,16 +1684,16 @@ ion-content.modal-content * {
 .fullscreen-modal {
   --height: 95%;
   --width: 100%;
-  --border-radius: 20px 20px 0 0;   /* stronger curve */
-  --box-shadow: 0 -6px 24px rgba(0,0,0,0.15);
+  --border-radius: 20px 20px 0 0; /* stronger curve */
+  --box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.15);
   --backdrop-opacity: 0.4;
 }
 
 /* Style the actual modal container (shadow part) */
 .fullscreen-modal::part(content) {
   background: #ffffff;
-  border-radius: 20px 20px 0 0;     /* same as above */
-  overflow: hidden;                 /* hides inner corners */
+  border-radius: 20px 20px 0 0; /* same as above */
+  overflow: hidden; /* hides inner corners */
 }
 
 /* Ensure content matches modal */
@@ -1616,12 +1703,12 @@ ion-content.modal-content * {
 
 /* Header polish so it feels attached to the sheet */
 .modal-header {
-  background: #ffffff;                 /* inherit the same surface color */
+  background: #ffffff; /* inherit the same surface color */
   position: sticky;
   top: 0;
   z-index: 1;
   padding: 14px 20px;
-  border-bottom: 1px solid rgba(0,0,0,0.06); /* lighter divider */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06); /* lighter divider */
 }
 
 /* Optional: keep the body readable and centered on wide screens */
@@ -1651,7 +1738,6 @@ ion-content.modal-content * {
 
 /* Add to your existing styles */
 
-
 /* .card-text {
   flex-grow: 1;
 } */
@@ -1659,7 +1745,7 @@ ion-content.modal-content * {
 .dynamic-card-content {
   padding: 0;
   position: relative;
-  height: 120px;             /* slightly taller so less cropping */
+  height: 120px; /* slightly taller so less cropping */
   border-radius: 16px;
   overflow: hidden;
 }
@@ -1686,8 +1772,14 @@ ion-content.modal-content * {
   --background-focused: var(--background);
 }
 
-.success-btn { --background: #28a745; --color: #fff; }
-.warning-btn { --background: #ff9f1a; --color: #fff; }
+.success-btn {
+  --background: #28a745;
+  --color: #fff;
+}
+.warning-btn {
+  --background: #ff9f1a;
+  --color: #fff;
+}
 
 /* Pill label for cash-back – always legible on any image */
 .pill-label {
@@ -1704,8 +1796,6 @@ ion-content.modal-content * {
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: .2px;
+  letter-spacing: 0.2px;
 }
-
-
 </style>
