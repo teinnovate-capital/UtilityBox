@@ -18,7 +18,6 @@
                 v-model="email"
                 type="email"
                 placeholder="Email"
-                fill="solid"
                 class="custom-input"
             ></ion-input>
             </ion-item>
@@ -29,7 +28,6 @@
                 v-model="password"
                 type="password"
                 placeholder="Password"
-                fill="solid"
                 class="custom-input"
             ></ion-input>
             </ion-item>
@@ -40,7 +38,6 @@
                 v-model="confirmPassword"
                 type="password"
                 placeholder="Confirm Password"
-                fill="solid"
                 class="custom-input"
             ></ion-input>
             </ion-item>
@@ -392,6 +389,19 @@ export default {
 }
 
 .input-item {
+    --background: white;
+    --border-radius: 8px;
+    --padding-start: 0;
+    --padding-end: 0;
+    --inner-padding-start: 1rem;
+    --inner-padding-end: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.input-itemx {
     --background: white;
     --border-radius: 8px;
     --padding-start: 0;
