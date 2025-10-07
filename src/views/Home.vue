@@ -1,139 +1,145 @@
 <template>
   <ion-page>
-    <ion-content class="ion-padding custom-bg" fullscreen>
+    <ion-content class="ion-padding custom-bg page-content" fullscreen>
       <!-- Header with Logo and Profile -->
       <HeaderComponent :showEditProfile="false" />
-      <ion-toolbar color="#4b1248"></ion-toolbar>
 
-      <!-- 🟪 First Card: Toggle + Inputs -->
-      <ion-card class="first-card">
-        <ion-card-content class="first-card-content">
-          <div class="toggle-container">
-            <span :class="{ activeToggle: !isPrepaid }">Postpaid</span>
-            <ion-toggle v-model="isPrepaid" class="custom-toggle" />
-            <span :class="{ activeToggle: isPrepaid }">Prepaid</span>
-          </div>
+      <div class="page-content">
+        <ion-toolbar color="#4b1248"></ion-toolbar>
 
-          <ion-input
-            v-model="meterNo"
-            label="Meter No."
-            label-placement="floating"
-            placeholder="Enter Meter Number"
-            fill="outline"
-            class="form-input"
-          ></ion-input>
+        <!-- 🟪 First Card: Toggle + Inputs -->
+        <ion-card class="first-card">
+          <ion-card-content class="first-card-content">
+            <div class="toggle-container">
+              <span :class="{ activeToggle: !isPrepaid }">Postpaid</span>
+              <ion-toggle v-model="isPrepaid" class="custom-toggle" />
+              <span :class="{ activeToggle: isPrepaid }">Prepaid</span>
+            </div>
 
-          <ion-select
-            v-model="selectedEdc"
-            interface="popover"
-            placeholder="Select EDC"
-            class="form-input custom-select"
-          >
-            <ion-select-option
-              v-for="edc in edcOptions"
-              :key="edc.value"
-              :value="edc.value"
+            <ion-input
+              v-model="meterNo"
+              label="Meter No."
+              label-placement="floating"
+              placeholder="Enter Meter Number"
+              fill="outline"
+              class="form-input"
+            ></ion-input>
+
+            <ion-select
+              v-model="selectedEdc"
+              interface="popover"
+              placeholder="Select EDC"
+              class="form-input custom-select"
             >
-              {{ edc.label }}
-            </ion-select-option>
-          </ion-select>
+              <ion-select-option
+                v-for="edc in edcOptions"
+                :key="edc.value"
+                :value="edc.value"
+              >
+                {{ edc.label }}
+              </ion-select-option>
+            </ion-select>
 
-          <ion-button
-            expand="block"
-            class="validate-btn"
-            @click="validateMeter"
-          >
-            Validate & Buy
-          </ion-button>
-        </ion-card-content>
-      </ion-card>
-
-      <!-- 🧃 Scrollable Card Carousel -->
-      <div class="carousel-container" @scroll="handleScroll" ref="carouselRef">
-        <!-- Card 1: Loyalty Points (unchanged) -->
-        <ion-card class="carousel-card">
-          <ion-card-content class="points-card-content">
-            <div class="points-label">Loyalty <br />Points</div>
-            <div class="points-value">{{ loyaltypoints_sum }}</div>
             <ion-button
-              shape="round"
-              size="small"
-              class="redeem-btn"
-              @click="openRedeemModal"
+              expand="block"
+              class="validate-btn"
+              @click="validateMeter"
             >
-              REDEEM
+              Validate & Buy
             </ion-button>
           </ion-card-content>
         </ion-card>
 
-        <!-- Dynamic Cards from API -->
-        <ion-card
-          class="carousel-card"
-          v-for="card in scrollCards"
-          :key="card.id"
+        <!-- 🧃 Scrollable Card Carousel -->
+        <div
+          class="carousel-container"
+          @scroll="handleScroll"
+          ref="carouselRef"
         >
-          <ion-card-content class="dynamic-card-content">
-            <div
-              class="card-bg"
-              :style="{
-                backgroundImage: `url(${card.backgroundImage})`,
-                backgroundPosition: card.bgPos || '50% 45%',
-              }"
-            >
-              <!-- Bottom-right CTA button (refer) -->
+          <!-- Card 1: Loyalty Points (unchanged) -->
+          <ion-card class="carousel-card">
+            <ion-card-content class="points-card-content">
+              <div class="points-label">Loyalty <br />Points</div>
+              <div class="points-value">{{ loyaltypoints_sum }}</div>
               <ion-button
-                v-if="card.ctaType === 'button'"
-                class="action-btn"
                 shape="round"
                 size="small"
-                :class="[
-                  card.buttonColor === 'success'
-                    ? 'success-btn'
-                    : 'warning-btn',
-                ]"
-                @click="handleCardAction(card)"
+                class="redeem-btn"
+                @click="openRedeemModal"
               >
-                {{ card.ctaText }}
+                REDEEM
               </ion-button>
+            </ion-card-content>
+          </ion-card>
 
-              <!-- Top-left pill label (cashback) -->
-              <span v-else-if="card.ctaType === 'label'" class="pill-label">
-                {{ card.ctaText }}
-              </span>
-            </div>
-          </ion-card-content>
-        </ion-card>
+          <!-- Dynamic Cards from API -->
+          <ion-card
+            class="carousel-card"
+            v-for="card in scrollCards"
+            :key="card.id"
+          >
+            <ion-card-content class="dynamic-card-content">
+              <div
+                class="card-bg"
+                :style="{
+                  backgroundImage: `url(${card.backgroundImage})`,
+                  backgroundPosition: card.bgPos || '50% 45%',
+                }"
+              >
+                <!-- Bottom-right CTA button (refer) -->
+                <ion-button
+                  v-if="card.ctaType === 'button'"
+                  class="action-btn"
+                  shape="round"
+                  size="small"
+                  :class="[
+                    card.buttonColor === 'success'
+                      ? 'success-btn'
+                      : 'warning-btn',
+                  ]"
+                  @click="handleCardAction(card)"
+                >
+                  {{ card.ctaText }}
+                </ion-button>
 
-        <ReferalModal
-          v-model:isOpen="referralModalOpen"
-          :referralLink="referralLink"
-          :referral-code="referralCode"
-          @update:isOpen="referralModalOpen = $event"
-        />
-        <RedeemModal
-          v-model:isOpen="redeemModalOpen"
-          :loyaltyPoints="loyaltypoints_sum"
-          @update:isOpen="redeemModalOpen = $event"
-        />
-      </div>
+                <!-- Top-left pill label (cashback) -->
+                <span v-else-if="card.ctaType === 'label'" class="pill-label">
+                  {{ card.ctaText }}
+                </span>
+              </div>
+            </ion-card-content>
+          </ion-card>
 
-      <!-- Pagination Dots -->
-      <div class="dots">
-        <span
-          v-for="(_, index) in totalCards"
-          :key="index"
-          :class="{ active: index === currentIndex }"
-        ></span>
-      </div>
+          <ReferalModal
+            v-model:isOpen="referralModalOpen"
+            :referralLink="referralLink"
+            :referral-code="referralCode"
+            @update:isOpen="referralModalOpen = $event"
+          />
+          <RedeemModal
+            v-model:isOpen="redeemModalOpen"
+            :loyaltyPoints="loyaltypoints_sum"
+            @update:isOpen="redeemModalOpen = $event"
+          />
+        </div>
 
-      <!-- 📰 Offers Section -->
-      <div class="offers-section">
-        <h2>Photo of the Day</h2>
-        <img :src="firstRewardImage" class="offers-img" alt="Current Offer" />
-      </div>
+        <!-- Pagination Dots -->
+        <div class="dots">
+          <span
+            v-for="(_, index) in totalCards"
+            :key="index"
+            :class="{ active: index === currentIndex }"
+          ></span>
+        </div>
 
-      <!-- 💬 Modal -->
-      <!-- <ion-modal
+        <!-- 📰 Offers Section -->
+        <div class="offers-section">
+          <h2>Photo of the Day</h2>
+          <img :src="firstRewardImage" class="offers-img" alt="Current Offer" />
+        </div>
+
+        <!-- 💬 Modal -->
+        <!-- <ion-modal
       :is-open="isModalOpen"
       @didDismiss="isModalOpen = false"
       :presenting-element="presentingEl"
@@ -142,35 +148,55 @@
       class="fullscreen-modal"
       > -->
 
-      <ion-modal
-        :is-open="isModalOpen"
-        :presenting-element="presentingEl"
-        :backdrop-dismiss="false"
-        :breakpoints="[0, 0.95, 1]"
-        :initial-breakpoint="0.95"
-        class="fullscreen-modal"
-      >
-        <div class="modal-header">
-          <h2>Buy Electricity</h2>
-          <ion-button
-            fill="clear"
-            size="default"
-            @click="closeModal"
-            class="close-button"
-            :disabled="isLoading || isProcessingPayment || isProcessingTx"
-          >
-            <ion-icon :icon="closeCircle" />
-          </ion-button>
-        </div>
+        <ion-modal
+          :is-open="isModalOpen"
+          :presenting-element="presentingEl"
+          :backdrop-dismiss="false"
+          :breakpoints="[0, 0.95, 1]"
+          :initial-breakpoint="0.95"
+          class="fullscreen-modal"
+        >
+          <div class="modal-header">
+            <h2>Buy Electricity</h2>
+            <ion-button
+              fill="clear"
+              size="default"
+              @click="closeModal"
+              class="close-button"
+              :disabled="isLoading || isProcessingPayment || isProcessingTx"
+            >
+              <ion-icon :icon="closeCircle" />
+            </ion-button>
+          </div>
 
-        <ion-content class="modal-content">
-          <!-- Loading State -->
-          <!-- <div v-if="isLoading" class="loader-container">
+          <ion-content class="modal-content">
+            <!-- Loading State -->
+            <!-- <div v-if="isLoading" class="loader-container">
             <img src="/assets/Loading animation blue.gif" alt="Loading..." />
           </div> -->
-          <!-- Validation Loader -->
-          <div v-if="isLoading" class="loader-overlay">
-            <div class="loader-container">
+            <!-- Validation Loader -->
+            <div v-if="isLoading" class="loader-overlay">
+              <div class="loader-container">
+                <div class="loader-bars">
+                  <div class="bar1"></div>
+                  <div class="bar2"></div>
+                  <div class="bar3"></div>
+                  <div class="bar4"></div>
+                  <div class="bar5"></div>
+                  <div class="bar6"></div>
+                </div>
+                <p class="centered-element">Validating meter...</p>
+              </div>
+            </div>
+
+            <!-- Payment Processing State -->
+            <!-- <div v-else-if="isProcessingPayment" class="loader-container">
+            <img src="/assets/Loading animation blue.gif" alt="Processing Payment..." />
+            <p class="centered-element">Processing your payment...</p>
+          </div> -->
+            <!-- Payment Processing Loader -->
+            <div v-else-if="isProcessingPayment" class="loader-container">
+              <!-- <div class="loader"></div> -->
               <div class="loader-bars">
                 <div class="bar1"></div>
                 <div class="bar2"></div>
@@ -179,136 +205,119 @@
                 <div class="bar5"></div>
                 <div class="bar6"></div>
               </div>
-              <p class="centered-element">Validating meter...</p>
+              <p class="centered-element">Processing your payment...</p>
             </div>
-          </div>
 
-          <!-- Payment Processing State -->
-          <!-- <div v-else-if="isProcessingPayment" class="loader-container">
-            <img src="/assets/Loading animation blue.gif" alt="Processing Payment..." />
-            <p class="centered-element">Processing your payment...</p>
-          </div> -->
-          <!-- Payment Processing Loader -->
-          <div v-else-if="isProcessingPayment" class="loader-container">
-            <!-- <div class="loader"></div> -->
-            <div class="loader-bars">
-              <div class="bar1"></div>
-              <div class="bar2"></div>
-              <div class="bar3"></div>
-              <div class="bar4"></div>
-              <div class="bar5"></div>
-              <div class="bar6"></div>
+            <!-- Show error if timeout or failure -->
+            <div v-else-if="txErrorMessage" class="error-message">
+              <p>{{ txErrorMessage }}</p>
             </div>
-            <p class="centered-element">Processing your payment...</p>
-          </div>
 
-          <!-- Show error if timeout or failure -->
-          <div v-else-if="txErrorMessage" class="error-message">
-            <p>{{ txErrorMessage }}</p>
-          </div>
+            <div v-else-if="isProcessingTx" class="loader-container">
+              <!-- <div class="loader"></div> -->
+              <div class="loader-bars">
+                <div class="bar1"></div>
+                <div class="bar2"></div>
+                <div class="bar3"></div>
+                <div class="bar4"></div>
+                <div class="bar5"></div>
+                <div class="bar6"></div>
+              </div>
+              <p class="centered-element">Processing your transaction...</p>
+            </div>
 
-          <div v-else-if="isProcessingTx" class="loader-container">
-            <!-- <div class="loader"></div> -->
-            <div class="loader-bars">
-              <div class="bar1"></div>
-              <div class="bar2"></div>
-              <div class="bar3"></div>
-              <div class="bar4"></div>
-              <div class="bar5"></div>
-              <div class="bar6"></div>
-            </div>
-            <p class="centered-element">Processing your transaction...</p>
-          </div>
-
-          <!-- Payment Success State -->
-          <div
-            v-else-if="paymentResult === 'success'"
-            class="payment-result success"
-          >
-            <div class="result-header">
-              <h2 class="success-title">Transaction Successful!</h2>
-            </div>
-            <div class="token-details">
-              <p><strong>Token:</strong> {{ purchaseToken }}</p>
-              <p><strong>Amount:</strong> ₦{{ enteredAmount }}</p>
-              <p><strong>Meter Number:</strong> {{ meterDetails.accountno }}</p>
-              <p><strong>Transaction Ref:</strong> {{ paymentReference }}</p>
-            </div>
-            <ion-button
-              expand="block"
-              color="success"
-              @click="closeModal"
-              class="centered-button"
+            <!-- Payment Success State -->
+            <div
+              v-else-if="paymentResult === 'success'"
+              class="payment-result success"
             >
-              Done
-            </ion-button>
-          </div>
-
-          <!-- Payment Failed State -->
-          <div
-            v-else-if="paymentResult === 'failed'"
-            class="payment-result failed"
-          >
-            <div class="result-header">
-              <h2 class="failed-title">Payment Failed</h2>
+              <div class="result-header">
+                <h2 class="success-title">Transaction Successful!</h2>
+              </div>
+              <div class="token-details">
+                <p><strong>Token:</strong> {{ purchaseToken }}</p>
+                <p><strong>Amount:</strong> ₦{{ enteredAmount }}</p>
+                <p>
+                  <strong>Meter Number:</strong> {{ meterDetails.accountno }}
+                </p>
+                <p><strong>Transaction Ref:</strong> {{ paymentReference }}</p>
+              </div>
+              <ion-button
+                expand="block"
+                color="success"
+                @click="closeModal"
+                class="centered-button"
+              >
+                Done
+              </ion-button>
             </div>
-            <p class="centered-element">{{ paymentErrorMessage }}</p>
-            <ion-button
-              expand="block"
-              color="danger"
-              @click="resetPayment"
-              class="centered-button"
+
+            <!-- Payment Failed State -->
+            <div
+              v-else-if="paymentResult === 'failed'"
+              class="payment-result failed"
             >
-              Try Again
-            </ion-button>
-          </div>
+              <div class="result-header">
+                <h2 class="failed-title">Payment Failed</h2>
+              </div>
+              <p class="centered-element">{{ paymentErrorMessage }}</p>
+              <ion-button
+                expand="block"
+                color="danger"
+                @click="resetPayment"
+                class="centered-button"
+              >
+                Try Again
+              </ion-button>
+            </div>
 
-          <!-- Validated Details State (your existing content) -->
-          <div v-else class="validated-details">
-            <h5 class="validated-title">Validated</h5>
-            <p>
-              <strong class="subheading">Meter Customer Name</strong> <br />
-              {{ meterDetails.responsename }}
-            </p>
-            <p>
-              <strong>Meter Number:</strong> <br />
-              {{ meterDetails.accountno }}
-            </p>
-            <p>
-              <strong>Address:</strong> <br />
-              {{ meterDetails.responseaddr }}
-            </p>
-            <br />
-            <p class="centered-element">{{ email }}</p>
-            <br />
-            <p class="centered-element">Minimum Amount: ₦{{ min_amount }}</p>
+            <!-- Validated Details State (your existing content) -->
+            <div v-else class="validated-details">
+              <h5 class="validated-title">Validated</h5>
+              <p>
+                <strong class="subheading">Meter Customer Name</strong> <br />
+                {{ meterDetails.responsename }}
+              </p>
+              <p>
+                <strong>Meter Number:</strong> <br />
+                {{ meterDetails.accountno }}
+              </p>
+              <p>
+                <strong>Address:</strong> <br />
+                {{ meterDetails.responseaddr }}
+              </p>
+              <br />
+              <p class="centered-element">{{ email }}</p>
+              <br />
+              <p class="centered-element">Minimum Amount: ₦{{ min_amount }}</p>
 
-            <ion-input
-              v-model="enteredAmount"
-              placeholder="Enter Amount"
-              type="number"
-              class="centered-input"
-            ></ion-input>
+              <ion-input
+                v-model="enteredAmount"
+                placeholder="Enter Amount"
+                type="number"
+                class="centered-input"
+              ></ion-input>
 
-            <p class="centered-element">
-              <em>₦100 - convenience fee will be added to total.</em>
-            </p>
+              <p class="centered-element">
+                <em>₦100 - convenience fee will be added to total.</em>
+              </p>
 
-            <ion-button
-              expand="block"
-              color="primary"
-              @click="processPayment"
-              class="centered-button"
-              :disabled="
-                !enteredAmount || enteredAmount < meterDetails.minimum_amount
-              "
-            >
-              <span v-if="!isProcessingPayment">Continue to Payment</span>
-              <span v-else>Processing...</span>
-            </ion-button>
-          </div>
-        </ion-content>
-      </ion-modal>
+              <ion-button
+                expand="block"
+                color="primary"
+                @click="processPayment"
+                class="centered-button"
+                :disabled="
+                  !enteredAmount || enteredAmount < meterDetails.minimum_amount
+                "
+              >
+                <span v-if="!isProcessingPayment">Continue to Payment</span>
+                <span v-else>Processing...</span>
+              </ion-button>
+            </div>
+          </ion-content>
+        </ion-modal>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -340,6 +349,8 @@ import {
   logOutOutline,
 } from "ionicons/icons";
 import axios from "axios";
+import { useElectricityStore } from "@/stores/electricityStore";
+const electricityStore = useElectricityStore();
 
 import { ref, onMounted, computed } from "vue";
 
@@ -1170,6 +1181,18 @@ const completePayment = (dt) => {
       purchaseToken.value = dt.token;
       paymentResult.value = "success";
       paymentReference.value = dt.paymentref || currentTxId.value;
+
+      // ✅ Save transaction to Pinia store
+      electricityStore.handleSuccessfulElectricityPurchase({
+        userId: userId || null,
+        meterNumber: meterNo.value,
+        amount: parseFloat(enteredAmount.value),
+        token: dt.token,
+        provider: selectedEdc.value,
+        date: edt,
+      });
+
+      console.log("💾 Transaction stored in Pinia + localStorage");
     } else if (dt.status_disco === 2) {
       paymentResult.value = "failed";
       paymentErrorMessage.value = "Transaction Failed at EDC; Contact Support";
@@ -1280,6 +1303,10 @@ const closeModal = () => {
 </script>
 
 <style scoped>
+.page-content {
+  padding-top: 90px;
+}
+
 .custom-bg {
   --background: linear-gradient(180deg, #7b2c7e 0%, #5a1a5d 100%);
   background-color: #4b1248;
@@ -1797,5 +1824,8 @@ ion-content.modal-content * {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.2px;
+}
+.page-content {
+  padding-top: 80px;
 }
 </style>

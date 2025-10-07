@@ -75,13 +75,33 @@ const logout = () => {
 </script>
 
 <style scoped>
-.header-bar {
+/* .header-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
   background: transparent;
+} */
+.header-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  
+
+  /* solid background so content doesn’t show through */
+  background-color: #752978; /* or your purple theme color */
+  color: white;
+
+  /* optional subtle shadow for separation */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
+
 
 .header-logo {
   height: 60px;
