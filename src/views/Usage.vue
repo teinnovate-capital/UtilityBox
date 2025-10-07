@@ -1,10 +1,10 @@
 
 <template>
   <ion-page class="usage-page" fullscreen>
-    <ion-content class="ion-padding custom-bg" fullscreen>
+    <ion-content class="ion-padding custom-bg usage-page" fullscreen>
       <HeaderComponent />
-
-      <!-- Energy Usage Chart -->
+      <div class="page-body">
+         <!-- Energy Usage Chart -->
       <div style="text-align: center">
         <h2 class="section-title">Energy Usage</h2>
       </div>
@@ -66,6 +66,9 @@
           </div>
         </div>
       </div>
+      </div>
+
+     
     </ion-content>
   </ion-page>
 </template>
@@ -78,7 +81,7 @@ import {
   toastController
 } from '@ionic/vue';
 import { copyOutline } from 'ionicons/icons';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import {
   Chart,
@@ -90,7 +93,9 @@ import {
   Legend
 } from 'chart.js';
 import HeaderComponent from '../components/HeaderComponent.vue';
+import { useElectricityStore } from '@/stores/electricityStore'
 
+const electricityStore = useElectricityStore()
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 const usageChartCanvas = ref(null);
@@ -227,9 +232,32 @@ onMounted(() => {
   fetchTransactionHistory();
   fetchUsageChartData();
 });
+
+// 👇 NEW — react to store updates
+watch(
+  () => electricityStore.refreshKey,
+  async (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+      console.log('🔄 Refreshing usage data due to new purchase...')
+      await fetchTransactionHistory()
+      await fetchUsageChartData()
+    }
+  }
+)
 </script>
 
 <style scoped>
+.usage-content {
+  position: relative;
+  background: linear-gradient(180deg, #7b2c7e 0%, #5a1a5d 100%);
+  color: white;
+}
+
+
+.page-body {
+  padding-top: 90px; 
+}
+
 /* Make text selectable */
 .selectable {
   user-select: text;

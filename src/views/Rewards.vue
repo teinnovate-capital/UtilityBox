@@ -3,8 +3,8 @@
     <ion-content class="ion-padding custom-bg" fullscreen>
       <!-- Header with Logo and Profile -->
       <HeaderComponent />
-
-      <!-- Page Title -->
+      <div class="page-content">
+        <!-- Page Title -->
       <div class="page-title">
         <h1>All offers</h1>
       </div>
@@ -71,6 +71,8 @@
           </div>
         </div>
       </div>
+      </div>
+      
     </ion-content>
   </ion-page>
 </template>
@@ -150,6 +152,9 @@ onMounted(() => {
 
 
 <style scoped>
+.page-content {
+  padding-top: 90px;
+}
 .custom-bg {
   --background: linear-gradient(180deg, #7b2c7e 0%, #5a1a5d 100%);
   background-color: #4b1248;
