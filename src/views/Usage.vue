@@ -1,4 +1,4 @@
-
+<!-- src/views/Usage.vue-->
 <template>
   <ion-page class="usage-page" fullscreen>
     <ion-content class="ion-padding custom-bg usage-page" fullscreen>
@@ -165,8 +165,11 @@ const renderChart = () => {
     September: "Sep", October: "Oct", November: "Nov", December: "Dec"
   };
 
-  const labels = usageData.value.map(item => monthMap[item.monthname] + ' ' + item.year);
-  const values = usageData.value.map(item => item.totalamount / 100);
+  // const labels = usageData.value.map(item => monthMap[item.monthname] + ' ' + item.year);
+  // const values = usageData.value.map(item => item.totalamount / 100);
+
+  const labels = usageData.value.map(item => monthMap[item.monthname] + ' ' + item.year).reverse();
+  const values = usageData.value.map(item => item.totalamount / 100).reverse();
 
   window.currentChart = new Chart(ctx, {
     type: 'bar',

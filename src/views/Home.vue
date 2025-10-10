@@ -1,3 +1,4 @@
+<!-- src/views/Home.vue-->
 <template>
   <ion-page>
     <ion-content class="ion-padding custom-bg page-content" fullscreen>
@@ -1826,6 +1827,6 @@ ion-content.modal-content * {
   letter-spacing: 0.2px;
 }
 .page-content {
-  padding-top: 80px;
+  padding-top: 90px;
 }
 </style>

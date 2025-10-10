@@ -1,30 +1,39 @@
 <template>
-  <!-- Header with Logo and Profile -->
   <div class="header-bar">
     <div class="logo-container">
-      <img src="/src/assets/utilityboxlogo.png" alt="UtilityBox Logo" class="header-logo" />
+      <img
+        src="/src/assets/utilityboxlogo.png"
+        alt="UtilityBox Logo"
+        class="header-logo"
+      />
     </div>
-    <ion-button fill="clear" class="profile-button" @click="openProfilePopover" id="profile-trigger">
+
+    <!-- profile icon manually triggers popover -->
+    <ion-button fill="clear" class="profile-button" @click="presentPopover($event)">
       <ion-icon :icon="personCircle" slot="icon-only" />
     </ion-button>
+
+    <!-- programmatic popover (hidden until opened) -->
+    <ion-popover
+      ref="popoverRef"
+      :is-open="isPopoverOpen"
+      :event="popoverEvent"
+      @didDismiss="isPopoverOpen = false"
+    >
+      <ion-content>
+        <ion-list>
+          <ion-item v-if="showEditProfile" button @click="editProfile">
+            <ion-icon :icon="personOutline" slot="start" />
+            <ion-label>Edit Profile</ion-label>
+          </ion-item>
+          <ion-item button @click="handleLogout">
+            <ion-icon :icon="logOutOutline" slot="start" />
+            <ion-label>Logout</ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-content>
+    </ion-popover>
   </div>
-
-  <!-- Profile Popover -->
-  <ion-popover :is-open="isProfilePopoverOpen" trigger="profile-trigger" @didDismiss="isProfilePopoverOpen = false">
-    <ion-content>
-      <ion-list>
-        <ion-item button @click="editProfile" v-if="showEditProfile">
-          <ion-icon :icon="personOutline" slot="start" />
-          <ion-label>Edit Profile</ion-label>
-        </ion-item>
-        <ion-item button @click="logout">
-          <ion-icon :icon="logOutOutline" slot="start" />
-          <ion-label>Logout</ion-label>
-        </ion-item>
-      </ion-list>
-    </ion-content>
-  </ion-popover>
-
 </template>
 
 <script setup>
@@ -37,9 +46,10 @@ import {
   IonLabel,
   IonContent
 } from '@ionic/vue';
-
 import { personCircle, personOutline, logOutOutline } from 'ionicons/icons';
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user';
 
 // Props
 const props = defineProps({
@@ -49,39 +59,46 @@ const props = defineProps({
   }
 });
 
-// Reactive variables
-const isProfilePopoverOpen = ref(false);
+// router + store
+const router = useRouter();
+const userStore = useUserStore();
 
-// Profile methods
-const openProfilePopover = () => {
-  isProfilePopoverOpen.value = true;
+// state
+const isPopoverOpen = ref(false);
+const popoverRef = ref(null);
+const popoverEvent = ref(null);
+
+// open popover programmatically
+const presentPopover = (event) => {
+  popoverEvent.value = event;
+  isPopoverOpen.value = true;
 };
 
-const editProfile = () => {
-  isProfilePopoverOpen.value = false;
-  console.log('Edit profile clicked');
+// dismiss popover manually if needed
+const dismissPopover = async () => {
+  if (popoverRef.value) {
+    await popoverRef.value.$el.dismiss();
+  }
+  isPopoverOpen.value = false;
 };
 
-const logout = () => {
-  isProfilePopoverOpen.value = false;
-  localStorage.removeItem('userId');
-  localStorage.removeItem('email');
-  localStorage.removeItem('PKEY');
-  localStorage.removeItem('PKEY_TEST');
-  localStorage.removeItem('PPID');
-  localStorage.removeItem('TXID');
-  window.location.href = '/login';
+const editProfile = async () => {
+  await dismissPopover();
+  router.push('/profile/edit');
+};
+
+const handleLogout = async () => {
+  await dismissPopover();
+
+  userStore.clearUser();
+  localStorage.clear();
+  ['PKEY', 'PKEY_TEST', 'PPID', 'TXID'].forEach((k) => localStorage.removeItem(k));
+
+  setTimeout(() => router.push('/login'), 150);
 };
 </script>
 
 <style scoped>
-/* .header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background: transparent;
-} */
 .header-bar {
   position: fixed;
   top: 0;
@@ -92,16 +109,9 @@ const logout = () => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  
-
-  /* solid background so content doesn’t show through */
-  background-color: #752978; /* or your purple theme color */
+  background-color: #752978;
   color: white;
-
-  /* optional subtle shadow for separation */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
-
 
 .header-logo {
   height: 60px;
@@ -116,26 +126,25 @@ const logout = () => {
   height: 44px;
 }
 
-.profile-button ion-icon {
-  font-size: 28px;
-}
-
-ion-popover ion-item {
-  --detail-icon-opacity: 0;
-}
-
-/* Add to existing styles */
 ion-popover {
   --width: 200px;
   --min-height: auto;
-}
-
-ion-popover::part(arrow) {
-  display: block;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 ion-popover::part(content) {
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  animation: fadeSlideDown 0.25s ease both;
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

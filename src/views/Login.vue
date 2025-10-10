@@ -1,7 +1,6 @@
-
 <template>
     <ion-page>
-        <ion-content class=" login-content">
+        <ion-content class="login-content">
             <div class="login-container">
             <!-- Logo -->
             <div class="logo-container">
@@ -38,6 +37,16 @@
                 v-model="confirmPassword"
                 type="password"
                 placeholder="Confirm Password"
+                class="custom-input"
+            ></ion-input>
+            </ion-item>
+
+            <!-- Referral Code Input (optional, only for sign up) -->
+            <ion-item v-if="!isLogin" class="input-item">
+            <ion-input
+                v-model="referralCode"
+                type="text"
+                placeholder="Referral Code (optional)"
                 class="custom-input"
             ></ion-input>
             </ion-item>
@@ -99,8 +108,9 @@ import {
     toastController
 } from '@ionic/vue';
 import { ref } from 'vue';
-import { useUserStore } from '@/stores/user'
-const userStore = useUserStore()
+import { useUserStore } from '@/stores/user';
+import { useRouter } from 'vue-router';
+
 export default {
     name: 'LoginSignupPage',
     components: {
@@ -111,12 +121,17 @@ export default {
         IonButton,
     },
     setup() {
+        // 👇 Move these INSIDE setup()
+        const userStore = useUserStore();
+        const router = useRouter();
+        
         const isLogin = ref(true);
         const email = ref('');
         const password = ref('');
         const confirmPassword = ref('');
         const mobileno = ref('');
         const lastname = ref('');
+        const referralCode = ref('');
 
         const handleSubmit = async () => {
             if (!email.value || !password.value) {
@@ -146,8 +161,9 @@ export default {
                 mobileno: mobileno.value,
                 password: password.value,
                 lname: lastname.value,
-                streetname: '', // optional
-                stateid: ''     // optional
+                streetname: '',
+                stateid: '',
+                referral_code: referralCode.value
             };
 
             try {
@@ -162,6 +178,7 @@ export default {
 
                 const result = await response.json();
                 console.log('register response:', result);
+                
                 if (result.res) {
                 const toast = await toastController.create({
                     message: 'Signup successful! Please check your email to verify.',
@@ -170,10 +187,9 @@ export default {
                 });
                 await toast.present();
 
-                // auto-login shortcut (optional)
-                localStorage.setItem('userId', result.details);
-                localStorage.setItem('email', email.value);
-                window.location.href = '/tabs/home';
+                userStore.setUser(result, email.value);
+                router.push('/tabs/home');
+
                 } else if (result.details === 'email already exists') {
                 const toast = await toastController.create({
                     message: 'Email already exists. Please login or reset password.',
@@ -200,7 +216,7 @@ export default {
             }
 
             } else {
-            // LOGIN (already working)
+            // LOGIN
             const loginData = {
                 email: email.value,
                 password: password.value
@@ -219,16 +235,14 @@ export default {
                 console.log('login response:', result);
 
                 if (result.res) {
-                      userStore.setUser(result, email.value)
-                localStorage.setItem('userId', result.details);
-                localStorage.setItem('email', email.value);
+                userStore.setUser(result, email.value);
                 const toast = await toastController.create({
                     message: 'Login successful',
                     duration: 2000,
                     color: 'success'
                 });
                 await toast.present();
-                window.location.href = '/tabs/home';
+                router.push('/tabs/home'); 
                 } else {
                 const toast = await toastController.create({
                     message: 'Login failed. Check your credentials.',
@@ -250,6 +264,7 @@ export default {
 
             password.value = '';
             confirmPassword.value = '';
+            referralCode.value = '';
         };
 
         const handleForgotPassword = async () => {
@@ -317,13 +332,12 @@ export default {
             confirmPassword,
             mobileno,
             lastname,
+            referralCode,
             handleSubmit,
             handleForgotPassword,
             toggleMode
         };
     }
-
-
 };
 </script>
 
@@ -346,10 +360,8 @@ export default {
 }
 
 .logo-box {
-    /* background: white; */
     padding: 0.75rem 1rem;
     border-radius: 8px;
-    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); */
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -401,19 +413,6 @@ export default {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.input-itemx {
-    --background: white;
-    --border-radius: 8px;
-    --padding-start: 0;
-    --padding-end: 0;
-    --inner-padding-start: 1rem;
-    --inner-padding-end: 1rem;
-    --min-height: 50px;
-    margin-bottom: 0.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 .custom-input {
     --color: #333;
     --placeholder-color: #999;
@@ -424,19 +423,17 @@ export default {
 .login-button {
     background: none;
     --background: orange; 
-    --color: white ;
+    --color: white;
     --border-radius: 25px;
     --padding-top: 0.75rem;
     --padding-bottom: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.5px;
     margin-top: 0.5rem;
-    /* box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
-    transition: all 0.3s ease;*/
 }
 
 .login-button:hover {
-    --background: #ff8c42 
+    --background: #ff8c42;
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
 }
@@ -448,7 +445,7 @@ export default {
     width: 100%;
     max-width: 320px;
     margin-top: 2rem;
-    }
+}
 
 .link-button {
     --color: white;
@@ -477,7 +474,6 @@ export default {
     line-height: 1.3;
 }
 
-/* Remove default ion-item styling */
 ion-item {
     --border-width: 0;
     --highlight-height: 0;

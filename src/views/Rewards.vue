@@ -1,3 +1,4 @@
+<!-- src/views/Rewards.vue-->
 <template>
   <ion-page>
     <ion-content class="ion-padding custom-bg" fullscreen>
